@@ -46,7 +46,7 @@ jobs:
         with:
           registry: git.example.com
           username: benn0r
-          password: ${{ github.token }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
 
       - name: Set image tags
         id: image
