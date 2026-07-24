@@ -44,7 +44,7 @@ test("creates and answers a love request", async () => {
   const createResponse = await fetch(`http://localhost:${port}/api/requests`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "Juliet" }),
+    body: JSON.stringify({ name: "Nayane" }),
   });
   assert.equal(createResponse.status, 201);
   const created = await createResponse.json();
@@ -63,7 +63,7 @@ test("creates and answers a love request", async () => {
   const statusResponse = await fetch(`http://localhost:${port}/api/requests/${created.id}`);
   assert.deepEqual(await statusResponse.json(), {
     id: created.id,
-    name: "Juliet",
+    name: "Nayane",
     status: "answered",
     value: 875,
   });
