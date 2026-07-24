@@ -280,9 +280,11 @@ async function serveFile(res, pathname) {
   if (!filePath.startsWith(PUBLIC_DIR)) return sendJson(res, 403, { error: "Forbidden" });
   try {
     const content = await readFile(filePath);
+    const extension = extname(filePath);
+    const revalidateExtensions = new Set([".html", ".js", ".css", ".webmanifest"]);
     res.writeHead(200, {
-      "Content-Type": contentTypes[extname(filePath)] || "application/octet-stream",
-      "Cache-Control": extname(filePath) === ".html" ? "no-cache" : "public, max-age=3600",
+      "Content-Type": contentTypes[extension] || "application/octet-stream",
+      "Cache-Control": revalidateExtensions.has(extension) ? "no-cache" : "public, max-age=3600",
       "X-Content-Type-Options": "nosniff",
     });
     res.end(content);

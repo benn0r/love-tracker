@@ -89,11 +89,13 @@ function showResult(name, value, journey, photoUrl) {
 function showLovePhoto(photoUrl) {
   const figure = document.querySelector("#love-photo");
   const image = document.querySelector("#result-photo");
-  image.src = photoUrl;
-  image.addEventListener("load", () => {
+  const reveal = () => {
     figure.classList.remove("hidden");
     requestAnimationFrame(() => figure.classList.add("photo-reveal"));
-  }, { once: true });
+  };
+  image.addEventListener("load", reveal, { once: true });
+  image.src = photoUrl;
+  if (image.complete && image.naturalWidth > 0) reveal();
 }
 
 function getApproximateLocation() {
