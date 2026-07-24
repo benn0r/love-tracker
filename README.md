@@ -81,6 +81,24 @@ and stores requests and photos in the persistent `love-tracker-data` volume.
 
 The health check endpoint is `GET /health`.
 
+### Gitea Container Registry
+
+The Gitea Actions workflow tests the app, builds its Docker image on pushes, and
+publishes it to:
+
+```text
+git.example.com/benn0r/love-tracker
+```
+
+Every image receives an immutable full-commit tag and a mutable tag derived from
+its branch name. Registry tags cannot contain `/`, so unsupported characters are
+replaced with `-`; for example, `codex/gitea-registry-coolify-staging` becomes
+`codex-gitea-registry-coolify-staging`. The branch tag is removed when its branch
+is deleted or its pull request is merged. Add a repository Actions secret named
+`REGISTRY_TOKEN` containing a Gitea personal access token with package
+read/write permission. The workflow requests only `contents: read` and
+`packages: write`.
+
 ## Privacy and lifecycle
 
 Browser geolocation remains opt-in and controls the animated journey map. Unless

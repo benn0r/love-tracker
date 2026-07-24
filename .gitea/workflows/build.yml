@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest-slim
     container: node:22.13.0-bookworm
     timeout-minutes: 15
@@ -21,3 +21,49 @@ jobs:
 
       - name: Test
         run: npm test
+
+  publish-image:
+    if: gitea.event_name == 'push'
+    runs-on: ubuntu-latest-slim
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Docker CLI
+        shell: sh
+        run: |
+          apt-get update
+          apt-get install --yes docker.io
+          docker version
+
+      - name: Log in to Gitea Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: git.example.com
+          username: benn0r
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: Build and push image
+        shell: sh
+        env:
+          IMAGE_SHA: ${{ gitea.sha }}
+          IMAGE_REF: ${{ gitea.ref }}
+          IMAGE_BRANCH: ${{ gitea.ref_name }}
+        run: |
+          image="git.example.com/benn0r/love-tracker"
+          branch_tag="$(printf '%s' "${IMAGE_BRANCH}" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#[^a-z0-9_.-]#-#g')"
+
+          docker build --tag "${image}:${IMAGE_SHA}" .
+          docker push "${image}:${IMAGE_SHA}"
+
+          if [ "${IMAGE_REF#refs/heads/}" != "${IMAGE_REF}" ]; then
+            docker tag "${image}:${IMAGE_SHA}" "${image}:${branch_tag}"
+            docker push "${image}:${branch_tag}"
+          fi

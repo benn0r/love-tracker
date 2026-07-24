@@ -1,0 +1,46 @@
+name: Clean up branch image
+
+on:
+  delete:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  deleted-branch:
+    if: gitea.event_name == 'delete' && gitea.event.ref_type == 'branch'
+    runs-on: ubuntu-latest-slim
+    steps:
+      - name: Delete branch image tag
+        shell: sh
+        env:
+          BRANCH_NAME: ${{ gitea.event.ref }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          branch_tag="$(printf '%s' "${BRANCH_NAME}" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#[^a-z0-9_.-]#-#g')"
+          status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --request DELETE \
+            --header "Authorization: token ${REGISTRY_TOKEN}" \
+            "https://git.example.com/api/v1/packages/benn0r/container/love-tracker/${branch_tag}")"
+          [ "${status}" = "204" ] || [ "${status}" = "404" ]
+
+  merged-branch:
+    if: gitea.event_name == 'pull_request' && gitea.event.pull_request.merged == true
+    runs-on: ubuntu-latest-slim
+    steps:
+      - name: Delete merged branch image tag
+        shell: sh
+        env:
+          BRANCH_NAME: ${{ gitea.event.pull_request.head.ref }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          branch_tag="$(printf '%s' "${BRANCH_NAME}" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#[^a-z0-9_.-]#-#g')"
+          status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            --request DELETE \
+            --header "Authorization: token ${REGISTRY_TOKEN}" \
+            "https://git.example.com/api/v1/packages/benn0r/container/love-tracker/${branch_tag}")"
+          [ "${status}" = "204" ] || [ "${status}" = "404" ]
