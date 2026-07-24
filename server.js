@@ -168,6 +168,7 @@ async function sendPushover(name, responseUrl) {
     message: `${name} wants to know how much you love her.`,
     url: responseUrl,
     url_title: `Answer ${name}`,
+    priority: "1",
     sound: "magic",
   });
   const response = await fetch("https://api.pushover.net/1/messages.json", {
