@@ -13,9 +13,9 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=photo-reveal-3" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
-    <script src="/app.js" defer></script>
+    <script src="/app.js?v=photo-reveal-3" defer></script>
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -77,7 +77,8 @@
               <img id="result-photo" alt="A photo sent with the love answer" />
               <span class="photo-heart" aria-hidden="true">♥</span>
             </div>
-            <figcaption>A little moment, sent just for you.</figcaption>
+            <figcaption id="photo-caption">A little moment, sent just for you.</figcaption>
+            <button id="retry-photo" class="retry-photo hidden" type="button">Try loading the photo again</button>
           </figure>
           <button class="quiet-button" id="again-button" type="button">Ask again</button>
         </div>

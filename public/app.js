@@ -86,16 +86,50 @@ function showResult(name, value, journey, photoUrl) {
   requestAnimationFrame(animate);
 }
 
-function showLovePhoto(photoUrl) {
+async function showLovePhoto(photoUrl) {
   const figure = document.querySelector("#love-photo");
   const image = document.querySelector("#result-photo");
+  const caption = document.querySelector("#photo-caption");
+  const retryButton = document.querySelector("#retry-photo");
+  let objectUrl;
+
   const reveal = () => {
     figure.classList.remove("hidden");
     requestAnimationFrame(() => figure.classList.add("photo-reveal"));
   };
-  image.addEventListener("load", reveal, { once: true });
-  image.src = photoUrl;
-  if (image.complete && image.naturalWidth > 0) reveal();
+
+  async function load(attempt = 1) {
+    retryButton.classList.add("hidden");
+    caption.textContent = attempt > 1 ? "Bringing your photo back into view…" : "A little moment, sent just for you.";
+    try {
+      const separator = photoUrl.includes("?") ? "&" : "?";
+      const response = await fetch(`${photoUrl}${separator}fresh=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      if (!response.ok) throw new Error(`Photo returned ${response.status}`);
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/") || !blob.size) throw new Error("Invalid photo response");
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(blob);
+      image.addEventListener("load", reveal, { once: true });
+      image.src = objectUrl;
+      caption.textContent = "A little moment, sent just for you.";
+    } catch (error) {
+      if (attempt < 4) {
+        setTimeout(() => load(attempt + 1), attempt * 700);
+        return;
+      }
+      console.error("Could not load love photo:", error);
+      figure.classList.remove("hidden");
+      figure.classList.add("photo-reveal");
+      caption.textContent = "The photo needs one more moment to arrive.";
+      retryButton.classList.remove("hidden");
+    }
+  }
+
+  retryButton.onclick = () => load(1);
+  load();
 }
 
 function getApproximateLocation() {

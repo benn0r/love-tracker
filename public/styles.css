@@ -405,6 +405,17 @@ button span { margin-left: .45rem; }
 .photo-heart { position: absolute; right: 1rem; bottom: .42rem; color: var(--rose); font-size: 1.15rem; }
 .love-photo figcaption { margin-top: 1.1rem; color: var(--muted); font-family: Georgia, serif; font-size: .85rem; font-style: italic; }
 .love-photo.photo-reveal { animation: photo-unfold 1s cubic-bezier(.2,.8,.2,1) forwards; }
+.retry-photo {
+  width: auto;
+  margin-top: .7rem;
+  padding: .55rem .85rem;
+  color: var(--rose);
+  background: transparent;
+  border: 1px solid var(--blush);
+  box-shadow: none;
+  font-size: .72rem;
+}
+.retry-photo:hover { box-shadow: none; }
 
 .celebrate::after {
   content: "♡  ♥  ♡  ♥  ♡  ♥  ♡";

@@ -327,10 +327,14 @@ async function serveFile(res, pathname) {
   try {
     const content = await readFile(filePath);
     const extension = extname(filePath);
-    const revalidateExtensions = new Set([".html", ".js", ".css", ".webmanifest"]);
+    const noStoreExtensions = new Set([".html", ".js", ".css", ".webmanifest"]);
+    const shouldNotStore = noStoreExtensions.has(extension);
     res.writeHead(200, {
       "Content-Type": contentTypes[extension] || "application/octet-stream",
-      "Cache-Control": revalidateExtensions.has(extension) ? "no-cache" : "public, max-age=3600",
+      "Cache-Control": shouldNotStore
+        ? "no-store, no-cache, must-revalidate, max-age=0"
+        : "public, max-age=3600",
+      ...(shouldNotStore ? { Pragma: "no-cache", Expires: "0" } : {}),
       "X-Content-Type-Options": "nosniff",
     });
     res.end(content);

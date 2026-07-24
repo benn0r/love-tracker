@@ -34,10 +34,11 @@ test("health endpoint reports ready", async () => {
   assert.deepEqual(await response.json(), { status: "ok" });
 });
 
-test("application scripts must revalidate so new reveal features load immediately", async () => {
+test("application scripts are never stored so new reveal features load immediately", async () => {
   const response = await fetch(`http://localhost:${port}/app.js`);
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("cache-control"), "no-cache");
+  assert.equal(response.headers.get("cache-control"), "no-store, no-cache, must-revalidate, max-age=0");
+  assert.equal(response.headers.get("pragma"), "no-cache");
 });
 
 test("creates and answers a love request", async () => {
