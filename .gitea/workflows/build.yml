@@ -23,7 +23,7 @@ jobs:
         run: npm test
 
   publish-image:
-    if: gitea.event_name == 'push'
+    if: gitea.event_name == 'push' && startsWith(gitea.ref, 'refs/heads/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -38,7 +38,7 @@ jobs:
         shell: sh
         run: |
           apt-get update
-          apt-get install --yes docker.io
+          apt-get install --yes curl docker.io jq
           docker version
 
       - name: Log in to Gitea Container Registry
@@ -51,8 +51,6 @@ jobs:
       - name: Build and push image
         shell: sh
         env:
-          IMAGE_SHA: ${{ gitea.sha }}
-          IMAGE_REF: ${{ gitea.ref }}
           IMAGE_BRANCH: ${{ gitea.ref_name }}
         run: |
           image="git.example.com/benn0r/love-tracker"
@@ -60,10 +58,25 @@ jobs:
             | tr '[:upper:]' '[:lower:]' \
             | sed 's#[^a-z0-9_.-]#-#g')"
 
-          docker build --tag "${image}:${IMAGE_SHA}" .
-          docker push "${image}:${IMAGE_SHA}"
+          docker build --tag "${image}:${branch_tag}" .
+          docker push "${image}:${branch_tag}"
 
-          if [ "${IMAGE_REF#refs/heads/}" != "${IMAGE_REF}" ]; then
-            docker tag "${image}:${IMAGE_SHA}" "${image}:${branch_tag}"
-            docker push "${image}:${branch_tag}"
-          fi
+      - name: Remove obsolete package versions
+        if: gitea.ref == 'refs/heads/main'
+        shell: sh
+        env:
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          versions="$(curl --fail --silent --show-error \
+            --header "Authorization: token ${REGISTRY_TOKEN}" \
+            "https://git.example.com/api/v1/packages/benn0r?type=container&q=love-tracker&limit=100")"
+
+          printf '%s' "${versions}" \
+            | jq -r '.[] | select(.name == "love-tracker" and .version != "main") | .version' \
+            | while IFS= read -r version; do
+                status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
+                  --request DELETE \
+                  --header "Authorization: token ${REGISTRY_TOKEN}" \
+                  "https://git.example.com/api/v1/packages/benn0r/container/love-tracker/${version}")"
+                [ "${status}" = "204" ] || [ "${status}" = "404" ]
+              done
