@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="/styles.css?v=__APP_VERSION__" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="/i18n.js?v=__APP_VERSION__" defer></script>
     <script src="/app.js?v=__APP_VERSION__" defer></script>
   </head>
-  <body>
+  <body data-page="main" data-love-name="__LOVE_NAME__">
     <main class="shell">
       <section class="card" aria-live="polite">
         <div class="seal" aria-hidden="true">
@@ -27,62 +28,62 @@
         </div>
 
         <div id="ask-view">
-          <h1>Love <em>Tracker</em></h1>
-          <p class="intro"><span class="intro-question">How much are you loved?</span> Tell me your name and I’ll send the question straight to his heart.</p>
+          <h1 data-i18n-html="brand">Love <em>Tracker</em></h1>
+          <p class="intro" data-i18n-html="ask.intro"><span class="intro-question">How much are you loved?</span> Tell me your name and I’ll send the question straight to his heart.</p>
           <form id="ask-form">
-            <label for="name">Your name</label>
+            <label for="name" data-i18n="ask.name">Your name</label>
             <div class="input-wrap">
-              <input id="name" name="name" type="text" maxlength="60" autocomplete="name" placeholder="e.g. __LOVE_NAME__" required />
+              <input id="name" name="name" type="text" maxlength="60" autocomplete="name" placeholder="e.g. __LOVE_NAME__" data-i18n-placeholder="ask.placeholder" required />
               <span aria-hidden="true">♡</span>
             </div>
             <label class="location-option" for="share-location">
               <input id="share-location" name="share-location" type="checkbox" />
               <span class="checkmark" aria-hidden="true">✓</span>
               <span>
-                <strong>Show our love journey</strong>
-                Share my approximate location for an animated love journey
+                <strong data-i18n="ask.journey.title">Show our love journey</strong>
+                <span data-i18n="ask.journey.copy">Share my approximate location for an animated love journey</span>
               </span>
             </label>
-            <p class="ip-location-notice"><span aria-hidden="true">⌖</span> For a rough identity check, your approximate city or region is always estimated from your IP and shown on the private answer screen. It can be inaccurate; your IP address is not shown or stored.</p>
-            <button type="submit">Ask <span>→</span></button>
+            <p class="ip-location-notice"><span aria-hidden="true">⌖</span> <span data-i18n="ask.ipNotice">For a rough identity check, your approximate city or region is always estimated from your IP and shown on the private answer screen. It can be inaccurate; your IP address is not shown or stored.</span></p>
+            <button type="submit"><span data-button-label data-i18n="ask.button">Ask</span> <span>→</span></button>
             <p class="form-error" id="ask-error" role="alert"></p>
           </form>
         </div>
 
         <div id="waiting-view" class="hidden">
-          <p class="eyebrow">Your note is on its way</p>
-          <h1>Waiting for<br /><em>an answer…</em></h1>
+          <p class="eyebrow" data-i18n="waiting.eyebrow">Your note is on its way</p>
+          <h1 data-i18n-html="waiting.title">Waiting for<br /><em>an answer…</em></h1>
           <div class="orbit" aria-hidden="true"><span>♥</span></div>
-          <p class="intro"><strong id="waiting-name"></strong>, keep this page open. The answer will bloom right here.</p>
-          <div class="waiting-dots" aria-label="Waiting"><i></i><i></i><i></i></div>
+          <p class="intro" id="waiting-copy"><strong id="waiting-name"></strong>, keep this page open. The answer will bloom right here.</p>
+          <div class="waiting-dots" aria-label="Waiting" data-i18n-aria-label="waiting.label"><i></i><i></i><i></i></div>
         </div>
 
         <div id="result-view" class="hidden">
-          <p class="eyebrow">The answer came from the heart</p>
-          <h1><em id="result-name"></em>,<br />you are loved</h1>
+          <p class="eyebrow" data-i18n="result.eyebrow">The answer came from the heart</p>
+          <h1 id="result-title"><em id="result-name"></em>,<br />you are loved</h1>
           <div class="love-number"><span id="result-number">0</span><sup>%</sup></div>
-          <div class="progress-track" role="progressbar" aria-label="Love meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="progress-track" role="progressbar" aria-label="Love meter" data-i18n-aria-label="result.meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div id="progress-fill"></div>
           </div>
           <p id="result-message" class="result-message"></p>
           <figure id="love-photo" class="love-photo hidden">
             <div class="photo-frame">
-              <img id="result-photo" alt="A photo sent with the love answer" />
+              <img id="result-photo" alt="A photo sent with the love answer" data-i18n-alt="result.photoAlt" />
               <span class="photo-heart" aria-hidden="true">♥</span>
             </div>
-            <figcaption id="photo-caption">A little moment, sent just for you.</figcaption>
-            <button id="retry-photo" class="retry-photo hidden" type="button">Try loading the photo again</button>
+            <figcaption id="photo-caption" data-i18n="result.photoCaption">A little moment, sent just for you.</figcaption>
+            <button id="retry-photo" class="retry-photo hidden" type="button" data-i18n="result.photoRetry">Try loading the photo again</button>
           </figure>
-          <section id="love-map" class="love-map hidden" aria-label="Your love journey">
-            <p class="map-kicker">Your love journey</p>
-            <p id="love-map-title" class="sr-only">Love travelling between two hearts</p>
+          <section id="love-map" class="love-map hidden" aria-label="Your love journey" data-i18n-aria-label="result.journey">
+            <p class="map-kicker" data-i18n="result.journey">Your love journey</p>
+            <p id="love-map-title" class="sr-only" data-i18n="result.journeyTitle">Love travelling between two hearts</p>
             <div id="real-map" class="real-map" role="img" aria-labelledby="love-map-title"></div>
-            <p class="map-caption">From his heart to yours.</p>
+            <p class="map-caption" data-i18n="result.mapCaption">From his heart to yours.</p>
           </section>
-          <button class="quiet-button" id="again-button" type="button">Ask again</button>
+          <button class="quiet-button" id="again-button" type="button" data-i18n="result.again">Ask again</button>
         </div>
       </section>
-      <p class="signature">made with <span>♥</span> for __LOVE_NAME__ <span class="version-separator">·</span> <span id="deployment-version" class="deployment-version">v__APP_VERSION__</span></p>
+      <p class="signature"><span data-i18n-html="footer">made with <span>♥</span> for __LOVE_NAME__</span> <span class="version-separator">·</span> <span id="deployment-version" class="deployment-version">v__APP_VERSION__</span></p>
     </main>
   </body>
 </html>

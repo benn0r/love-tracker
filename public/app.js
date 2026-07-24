@@ -3,6 +3,9 @@ const waitingView = document.querySelector("#waiting-view");
 const resultView = document.querySelector("#result-view");
 const askForm = document.querySelector("#ask-form");
 const askError = document.querySelector("#ask-error");
+const { t, apply, resultMessages } = window.LoveI18n;
+const loveName = document.body.dataset.loveName;
+apply({ loveName });
 let pollTimer;
 
 askForm.addEventListener("submit", async (event) => {
@@ -12,14 +15,15 @@ askForm.addEventListener("submit", async (event) => {
   const name = new FormData(askForm).get("name").trim();
   const wantsLocation = document.querySelector("#share-location").checked;
   button.disabled = true;
-  button.firstChild.textContent = "Sending… ";
+  const buttonLabel = button.querySelector("[data-button-label]");
+  buttonLabel.textContent = t("ask.sending");
 
   try {
     let location = null;
     if (wantsLocation) {
-      button.firstChild.textContent = "Finding your place… ";
+      buttonLabel.textContent = t("ask.finding");
       location = await getApproximateLocation();
-      button.firstChild.textContent = "Sending… ";
+      buttonLabel.textContent = t("ask.sending");
     }
     const response = await fetch("/api/requests", {
       method: "POST",
@@ -30,16 +34,16 @@ askForm.addEventListener("submit", async (event) => {
     if (!response.ok) throw new Error(data.error);
     showWaiting(data);
   } catch (error) {
-    askError.textContent = error.message || "Something went wrong. Please try again.";
+    askError.textContent = error.message || t("ask.error");
     button.disabled = false;
-    button.firstChild.textContent = "Ask ";
+    buttonLabel.textContent = t("ask.button");
   }
 });
 
 function showWaiting(request) {
   askView.classList.add("hidden");
   waitingView.classList.remove("hidden");
-  document.querySelector("#waiting-name").textContent = request.name;
+  document.querySelector("#waiting-copy").textContent = t("waiting.copy", { name: request.name });
   poll(request.id, request.name);
 }
 
@@ -61,7 +65,7 @@ function showResult(name, value, journey, photoUrl) {
   clearTimeout(pollTimer);
   waitingView.classList.add("hidden");
   resultView.classList.remove("hidden");
-  document.querySelector("#result-name").textContent = name;
+  document.querySelector("#result-title").innerHTML = t("result.title", { name: escapeHtml(name) });
   document.querySelector("#result-message").textContent = pickResultMessage(value);
   if (journey) showLoveMap(name, journey);
   if (photoUrl) showLovePhoto(photoUrl);
@@ -100,7 +104,7 @@ async function showLovePhoto(photoUrl) {
 
   async function load(attempt = 1) {
     retryButton.classList.add("hidden");
-    caption.textContent = attempt > 1 ? "Bringing your photo back into view…" : "A little moment, sent just for you.";
+    caption.textContent = attempt > 1 ? t("result.photoLoading") : t("result.photoCaption");
     try {
       const separator = photoUrl.includes("?") ? "&" : "?";
       const response = await fetch(`${photoUrl}${separator}fresh=${Date.now()}`, {
@@ -114,7 +118,7 @@ async function showLovePhoto(photoUrl) {
       objectUrl = URL.createObjectURL(blob);
       image.addEventListener("load", reveal, { once: true });
       image.src = objectUrl;
-      caption.textContent = "A little moment, sent just for you.";
+      caption.textContent = t("result.photoCaption");
     } catch (error) {
       if (attempt < 4) {
         setTimeout(() => load(attempt + 1), attempt * 700);
@@ -123,7 +127,7 @@ async function showLovePhoto(photoUrl) {
       console.error("Could not load love photo:", error);
       figure.classList.remove("hidden");
       figure.classList.add("photo-reveal");
-      caption.textContent = "The photo needs one more moment to arrive.";
+      caption.textContent = t("result.photoDelayed");
       retryButton.classList.remove("hidden");
     }
   }
@@ -151,8 +155,9 @@ function showLoveMap(name, journey) {
   const mapTitle = document.querySelector("#love-map-title");
   const latDirection = journey.to.latitude >= journey.from.latitude ? "north" : "south";
   const lonDirection = journey.to.longitude >= journey.from.longitude ? "east" : "west";
+  const direction = t(`direction.${latDirection}-${lonDirection}`);
 
-  mapTitle.textContent = `Love travelling ${latDirection}-${lonDirection} from his heart to ${name}`;
+  mapTitle.textContent = t("result.journeyDynamic", { direction, name });
   map.classList.remove("hidden");
   requestAnimationFrame(() => initializeRealMap(name, journey));
 }
@@ -188,7 +193,7 @@ function initializeRealMap(name, journey) {
 
   L.marker(origin, { icon: originIcon })
     .addTo(map)
-    .bindTooltip("His heart", { permanent: true, direction: "bottom", offset: [0, 12] });
+    .bindTooltip(t("result.origin"), { permanent: true, direction: "bottom", offset: [0, 12] });
   L.marker(destination, { icon: destinationIcon })
     .addTo(map)
     .bindTooltip(name, { permanent: true, direction: "bottom", offset: [0, 12] });
@@ -271,6 +276,10 @@ function animateHeartAlongRoute(marker, route) {
 }
 
 function pickResultMessage(value) {
+  const localizedPool = resultMessages.find(([max]) => value <= max)[1];
+  return localizedPool[Math.floor(Math.random() * localizedPool.length)];
+
+  /* English source archive kept here for easy copywriting reference. */
   const messagePools = [
     {
       max: 0,
@@ -419,6 +428,12 @@ function pickResultMessage(value) {
 
   const pool = messagePools.find((entry) => value <= entry.max).messages;
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function escapeHtml(value) {
+  const node = document.createElement("span");
+  node.textContent = value;
+  return node.innerHTML;
 }
 
 document.querySelector("#again-button").addEventListener("click", () => location.reload());

@@ -8,6 +8,9 @@ const photoInput = document.querySelector("#love-photo-input");
 const photoPreview = document.querySelector("#photo-preview");
 const photoPreviewWrap = document.querySelector("#photo-preview-wrap");
 const errorElement = document.querySelector("#response-error");
+const { t, apply } = window.LoveI18n;
+const loveName = document.body.dataset.loveName;
+apply({ loveName });
 let personName = "";
 let selectedPhoto = null;
 let submittedWithPhoto = false;
@@ -32,13 +35,13 @@ async function loadRequest() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
     personName = data.name;
-    document.querySelector("#person-name").textContent = data.name;
+    document.querySelector("#response-title").innerHTML = t("respond.title", { name: escapeHtml(data.name) });
     document.querySelector("#sent-name").textContent = data.name;
     if (data.requesterLocation || data.ipLocation) {
       showRequesterLocation(data.name, data.requesterLocation, data.ipLocation);
     } else {
       const status = document.querySelector("#ip-verification-status");
-      status.textContent = "IP-based location was unavailable for this request. If this question was created before location verification was added, ask for a new link.";
+      status.textContent = t("respond.locationUnavailable");
       status.classList.remove("hidden");
     }
     if (data.answered) {
@@ -46,19 +49,19 @@ async function loadRequest() {
       showSent();
     }
   } catch (error) {
-    formView.innerHTML = `<p class="eyebrow">This note has faded</p><h1><em>Link expired.</em></h1><p class="intro">${escapeHtml(error.message)}</p>`;
+    formView.innerHTML = `<p class="eyebrow">${t("respond.expiredEyebrow")}</p><h1><em>${t("respond.expiredTitle")}</em></h1><p class="intro">${escapeHtml(error.message)}</p>`;
   }
 }
 
 function showRequesterLocation(name, sharedLocation, ipLocation) {
   const mapSection = document.querySelector("#request-location-map");
-  document.querySelector("#request-location-title").textContent = `${name}'s approximate location`;
+  document.querySelector("#request-location-title").textContent = t("respond.approxLocation", { name });
   const place = ipLocation
     ? [ipLocation.city, ipLocation.region, ipLocation.country].filter(Boolean).join(", ")
     : "";
   document.querySelector("#request-location-caption").textContent = place
-    ? `IP estimate: ${place}. ${sharedLocation ? "The second heart is the location they chose to share." : "The raw IP address is not shown or stored."}`
-    : `${name}'s shared approximate location.`;
+    ? t(sharedLocation ? "respond.ipCaptionShared" : "respond.ipCaptionPrivate", { place })
+    : t("respond.sharedCaption", { name });
   mapSection.classList.remove("hidden");
 
   requestAnimationFrame(() => {
@@ -85,7 +88,7 @@ function showRequesterLocation(name, sharedLocation, ipLocation) {
 
     L.marker(coordinates, { icon: ipIcon })
       .addTo(map)
-      .bindTooltip(ipLocation ? "IP estimate" : `${name}'s shared location`, {
+      .bindTooltip(ipLocation ? t("respond.ipEstimate") : t("respond.sharedLocation", { name }), {
         permanent: true,
         direction: "bottom",
         offset: [0, 12],
@@ -101,7 +104,7 @@ function showRequesterLocation(name, sharedLocation, ipLocation) {
       });
       L.marker(sharedCoordinates, { icon: sharedIcon })
         .addTo(map)
-        .bindTooltip(`${name}'s shared location`, {
+        .bindTooltip(t("respond.sharedLocation", { name }), {
           permanent: true,
           direction: "bottom",
           offset: [0, 12],
@@ -115,14 +118,15 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   errorElement.textContent = "";
   const button = form.querySelector("button");
+  const buttonLabel = button.querySelector("[data-button-label]");
   button.disabled = true;
   try {
-    button.firstChild.textContent = "Finding your place… ";
+    buttonLabel.textContent = t("ask.finding");
     const location = await getApproximateLocation();
-    button.firstChild.textContent = selectedPhoto ? "Preparing your photo… " : "Sending my answer… ";
+    buttonLabel.textContent = selectedPhoto ? t("respond.preparing") : t("respond.sending");
     const photo = selectedPhoto ? await compressPhoto(selectedPhoto) : null;
     if (photo) {
-      button.firstChild.textContent = "Uploading your photo… ";
+      buttonLabel.textContent = t("respond.uploading");
       const photoResponse = await fetch(`/api/respond/${token}/photo`, {
         method: "POST",
         headers: { "Content-Type": photo.type },
@@ -130,11 +134,11 @@ form.addEventListener("submit", async (event) => {
       });
       const photoResult = await photoResponse.json();
       if (!photoResponse.ok || !photoResult.saved) {
-        throw new Error(photoResult.error || "Your photo could not be saved.");
+        throw new Error(t("respond.photoSaveError"));
       }
       submittedWithPhoto = true;
     }
-    button.firstChild.textContent = "Sending my answer… ";
+    buttonLabel.textContent = t("respond.sending");
     const response = await fetch(`/api/respond/${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -144,9 +148,9 @@ form.addEventListener("submit", async (event) => {
     if (!response.ok) throw new Error(data.error);
     showSent();
   } catch (error) {
-    errorElement.textContent = error.message || "Couldn’t send your answer.";
+    errorElement.textContent = error.message || t("respond.sendError");
     button.disabled = false;
-    button.firstChild.textContent = "Send my answer ";
+    buttonLabel.textContent = t("respond.send");
   }
 });
 
@@ -160,7 +164,7 @@ function clearPhoto() {
 
 function compressPhoto(file) {
   return new Promise((resolve, reject) => {
-    if (file.size > 12_000_000) return reject(new Error("Please choose a photo smaller than 12 MB."));
+    if (file.size > 12_000_000) return reject(new Error(t("respond.photoSize")));
     const image = new Image();
     const objectUrl = URL.createObjectURL(file);
     image.onload = () => {
@@ -172,14 +176,14 @@ function compressPhoto(file) {
       canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(objectUrl);
       canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new Error("That photo could not be prepared.")),
+        (blob) => blob ? resolve(blob) : reject(new Error(t("respond.photoPrepareError"))),
         "image/jpeg",
         0.72,
       );
     };
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error("That photo could not be opened."));
+      reject(new Error(t("respond.photoOpenError")));
     };
     image.src = objectUrl;
   });
@@ -202,9 +206,10 @@ function getApproximateLocation() {
 function showSent() {
   formView.classList.add("hidden");
   sentView.classList.remove("hidden");
-  if (submittedWithPhoto) {
-    document.querySelector("#sent-copy").innerHTML = `<span id="sent-name">${escapeHtml(personName)}</span> can see your answer and photo now. You may close this page.`;
-  }
+  document.querySelector("#sent-copy").textContent = t(
+    submittedWithPhoto ? "sent.copyPhoto" : "sent.copy",
+    { name: personName },
+  );
   document.body.classList.add("celebrate");
 }
 

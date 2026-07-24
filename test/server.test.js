@@ -53,6 +53,7 @@ test("HTML embeds the deployment version in its footer and asset URLs", async ()
   const html = await response.text();
   assert.match(html, />vtest-bu<\/span>/);
   assert.match(html, /\/app\.js\?v=test-bu/);
+  assert.match(html, /\/i18n\.js\?v=test-bu/);
   assert.match(html, /\/styles\.css\?v=test-bu/);
   assert.match(html, /made with <span>♥<\/span> for Nayane &amp; Ben/);
   assert.match(html, /placeholder="e\.g\. Nayane &amp; Ben"/);
@@ -66,6 +67,7 @@ test("private answer HTML carries the same deployment footer and fresh asset URL
   assert.match(html, /made with <span>♥<\/span> for Nayane &amp; Ben/);
   assert.match(html, />vtest-bu<\/span>/);
   assert.match(html, /\/respond\.js\?v=test-bu/);
+  assert.match(html, /\/i18n\.js\?v=test-bu/);
   assert.match(html, /\/styles\.css\?v=test-bu/);
   assert.doesNotMatch(html, /__(APP_VERSION|LOVE_NAME)__/);
 });
