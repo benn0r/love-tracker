@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff8f6" />
+    <title>How much do you love me?</title>
+    <meta name="description" content="Send a tiny love note and discover just how loved you are." />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <main class="shell">
+      <section class="card" aria-live="polite">
+        <div class="seal" aria-hidden="true">
+          <svg viewBox="0 0 80 80" role="img">
+            <path d="M40 64S15 50 15 31c0-14 18-19 25-7 7-12 25-7 25 7 0 19-25 33-25 33Z"/>
+          </svg>
+        </div>
+
+        <div id="ask-view">
+          <p class="eyebrow">A little question from the heart</p>
+          <h1>How much do you<br /><em>love me?</em></h1>
+          <p class="intro">Tell me your name and I’ll send the question straight to his heart.</p>
+          <form id="ask-form">
+            <label for="name">Your name</label>
+            <div class="input-wrap">
+              <input id="name" name="name" type="text" maxlength="60" autocomplete="name" placeholder="e.g. Juliet" required />
+              <span aria-hidden="true">♡</span>
+            </div>
+            <button type="submit">Send my love note <span>→</span></button>
+            <p class="form-error" id="ask-error" role="alert"></p>
+          </form>
+          <p class="privacy">Your name is only used for this one sweet question.</p>
+        </div>
+
+        <div id="waiting-view" class="hidden">
+          <p class="eyebrow">Your note is on its way</p>
+          <h1>Waiting for<br /><em>an answer…</em></h1>
+          <div class="orbit" aria-hidden="true"><span>♥</span></div>
+          <p class="intro"><strong id="waiting-name"></strong>, keep this page open. The answer will bloom right here.</p>
+          <div class="waiting-dots" aria-label="Waiting"><i></i><i></i><i></i></div>
+        </div>
+
+        <div id="result-view" class="hidden">
+          <p class="eyebrow">The answer came from the heart</p>
+          <h1><em id="result-name"></em>,<br />you are loved</h1>
+          <div class="love-number"><span id="result-number">0</span><sup>%</sup></div>
+          <div class="progress-track"><div id="progress-fill"></div></div>
+          <p id="result-message" class="result-message"></p>
+          <button class="quiet-button" id="again-button" type="button">Ask again</button>
+        </div>
+      </section>
+      <p class="signature">made with <span>♥</span> for the one who makes every day softer</p>
+    </main>
+  </body>
+</html>
