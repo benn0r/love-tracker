@@ -11,13 +11,19 @@ jobs:
     if: gitea.event_name == 'delete' && gitea.event.ref_type == 'branch'
     runs-on: ubuntu-latest-slim
     steps:
+      - name: Install curl
+        run: |
+          apt-get update
+          apt-get install --yes curl
+
       - name: Delete branch image tag
         shell: sh
         env:
           BRANCH_NAME: ${{ gitea.event.ref }}
           REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
-          branch_tag="$(printf '%s' "${BRANCH_NAME}" \
+          branch_name="${BRANCH_NAME#refs/heads/}"
+          branch_tag="$(printf '%s' "${branch_name}" \
             | tr '[:upper:]' '[:lower:]' \
             | sed 's#[^a-z0-9_.-]#-#g')"
           status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
@@ -30,13 +36,19 @@ jobs:
     if: gitea.event_name == 'pull_request' && gitea.event.pull_request.merged == true
     runs-on: ubuntu-latest-slim
     steps:
+      - name: Install curl
+        run: |
+          apt-get update
+          apt-get install --yes curl
+
       - name: Delete merged branch image tag
         shell: sh
         env:
           BRANCH_NAME: ${{ gitea.event.pull_request.head.ref }}
           REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
-          branch_tag="$(printf '%s' "${BRANCH_NAME}" \
+          branch_name="${BRANCH_NAME#refs/heads/}"
+          branch_tag="$(printf '%s' "${branch_name}" \
             | tr '[:upper:]' '[:lower:]' \
             | sed 's#[^a-z0-9_.-]#-#g')"
           status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
