@@ -34,7 +34,9 @@ async function loadRequest() {
     personName = data.name;
     document.querySelector("#person-name").textContent = data.name;
     document.querySelector("#sent-name").textContent = data.name;
-    if (data.requesterLocation) showRequesterLocation(data.name, data.requesterLocation);
+    if (data.requesterLocation || data.ipLocation) {
+      showRequesterLocation(data.name, data.requesterLocation, data.ipLocation);
+    }
     if (data.answered) {
       valueInput.value = data.value;
       showSent();
@@ -44,15 +46,21 @@ async function loadRequest() {
   }
 }
 
-function showRequesterLocation(name, location) {
+function showRequesterLocation(name, sharedLocation, ipLocation) {
   const mapSection = document.querySelector("#request-location-map");
   document.querySelector("#request-location-title").textContent = `${name}'s approximate location`;
-  document.querySelector("#request-location-caption").textContent = `${name}'s question is coming from here.`;
+  const place = ipLocation
+    ? [ipLocation.city, ipLocation.region, ipLocation.country].filter(Boolean).join(", ")
+    : "";
+  document.querySelector("#request-location-caption").textContent = place
+    ? `IP estimate: ${place}. ${sharedLocation ? "The second heart is the location they chose to share." : "The raw IP address is not shown or stored."}`
+    : `${name}'s shared approximate location.`;
   mapSection.classList.remove("hidden");
 
   requestAnimationFrame(() => {
     if (!window.L) return;
-    const coordinates = [location.latitude, location.longitude];
+    const primaryLocation = ipLocation || sharedLocation;
+    const coordinates = [primaryLocation.latitude, primaryLocation.longitude];
     const map = L.map("request-real-map", {
       attributionControl: true,
       scrollWheelZoom: false,
@@ -64,16 +72,38 @@ function showRequesterLocation(name, location) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 
-    const heartIcon = L.divIcon({
+    const ipIcon = L.divIcon({
       className: "love-map-marker destination-marker",
       html: '<span class="marker-core">♥</span><span class="marker-pulse"></span>',
       iconSize: [30, 30],
       iconAnchor: [15, 15],
     });
 
-    L.marker(coordinates, { icon: heartIcon })
+    L.marker(coordinates, { icon: ipIcon })
       .addTo(map)
-      .bindTooltip(`${name}'s heart`, { permanent: true, direction: "bottom", offset: [0, 12] });
+      .bindTooltip(ipLocation ? "IP estimate" : `${name}'s shared location`, {
+        permanent: true,
+        direction: "bottom",
+        offset: [0, 12],
+      });
+
+    if (sharedLocation && ipLocation) {
+      const sharedCoordinates = [sharedLocation.latitude, sharedLocation.longitude];
+      const sharedIcon = L.divIcon({
+        className: "love-map-marker",
+        html: '<span class="marker-core">♥</span>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+      L.marker(sharedCoordinates, { icon: sharedIcon })
+        .addTo(map)
+        .bindTooltip(`${name}'s shared location`, {
+          permanent: true,
+          direction: "bottom",
+          offset: [0, 12],
+        });
+      map.fitBounds([coordinates, sharedCoordinates], { padding: [55, 55], maxZoom: 11 });
+    }
   });
 }
 

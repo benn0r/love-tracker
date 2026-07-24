@@ -9,6 +9,8 @@ services:
       PUSHOVER_APP_TOKEN: "${PUSHOVER_APP_TOKEN:-}"
       PUSHOVER_USER_KEY: "${PUSHOVER_USER_KEY:-}"
       LOVE_NAME: "${LOVE_NAME:-Nayane}"
+      IP_GEOLOCATION_ENABLED: "${IP_GEOLOCATION_ENABLED:-true}"
+      IP_GEOLOCATION_URL: "${IP_GEOLOCATION_URL:-https://ipwho.is/{ip}}"
     volumes:
       - love-tracker-data:/data
 

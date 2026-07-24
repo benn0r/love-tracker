@@ -37,6 +37,8 @@ the terminal. Open <http://localhost:3000>.
 | Variable | Required | Description |
 | --- | --- | --- |
 | `LOVE_NAME` | No | Name shown in the example input and “made with love” footer. Defaults to `Nayane`. |
+| `IP_GEOLOCATION_ENABLED` | No | Set to `false` to disable automatic coarse IP geolocation. Enabled by default. |
+| `IP_GEOLOCATION_URL` | No | IP lookup URL containing an `{ip}` placeholder. Defaults to `https://ipwho.is/{ip}`. |
 | `PUBLIC_URL` | Production | Public base URL used in Pushover response links. |
 | `PUSHOVER_APP_TOKEN` | Production | Application token from Pushover. |
 | `PUSHOVER_USER_KEY` | Production | Pushover user or group key receiving response links. |
@@ -81,8 +83,15 @@ The health check endpoint is `GET /health`.
 
 ## Privacy and lifecycle
 
-Location sharing is opt-in. Response links contain a random 192-bit token and act
-as private bearer links. Requests and optional photos are stored under `DATA_DIR`
+Browser geolocation remains opt-in and controls the animated journey map. Unless
+disabled by the operator, the app also derives a coarse city/region estimate from
+the requester's IP through the configured lookup provider. This is disclosed on
+the request form; the raw IP is neither stored nor shown on the answer screen.
+IP-based locations can be wrong, especially with VPNs, mobile networks, and shared
+connections, and must not be treated as proof of identity.
+
+Response links contain a random 192-bit token and act as private bearer links.
+Requests, coarse location results, and optional photos are stored under `DATA_DIR`
 and automatically expire after seven days. Keep a single application replica
 unless the file store is replaced with shared storage or a database.
 

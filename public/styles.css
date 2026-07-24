@@ -178,6 +178,16 @@ input:focus { border-color: rgba(201,72,97,.55); box-shadow: 0 0 0 4px rgba(201,
 .location-option input:checked + .checkmark { color: white; border-color: var(--rose); background: var(--rose); }
 .location-option input:focus-visible + .checkmark { box-shadow: 0 0 0 4px rgba(201,72,97,.12); }
 .location-option strong { display: block; margin-bottom: .05rem; color: var(--ink); font-weight: 600; }
+.ip-location-notice {
+  display: flex;
+  gap: .45rem;
+  margin: -.35rem .2rem 1rem;
+  color: var(--muted);
+  font-size: .66rem;
+  line-height: 1.45;
+  text-align: left;
+}
+.ip-location-notice span { flex: 0 0 auto; color: var(--rose); font-size: .9rem; }
 
 button {
   width: 100%;

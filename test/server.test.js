@@ -15,6 +15,7 @@ const server = spawn(process.execPath, ["server.js"], {
     NODE_ENV: "test",
     APP_VERSION: "test-build",
     LOVE_NAME: "Nayane & Ben",
+    IP_GEOLOCATION_ENABLED: "false",
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -94,6 +95,7 @@ test("creates and answers a love request", async () => {
     answered: false,
     value: null,
     requesterLocation: { latitude: 47.38, longitude: 8.54 },
+    ipLocation: null,
   });
 
   const photoUploadResponse = await fetch(`http://localhost:${port}/api/respond/${token}/photo`, {

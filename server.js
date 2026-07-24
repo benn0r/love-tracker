@@ -2,6 +2,7 @@ import http from "node:http";
 import { randomBytes, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
+import { isIP } from "node:net";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
@@ -12,6 +13,8 @@ const PHOTO_DIR = join(DATA_DIR, "photos");
 const PORT = Number(process.env.PORT || 3000);
 const APP_VERSION = String(process.env.APP_VERSION || process.env.SOURCE_COMMIT || "local").slice(0, 7);
 const LOVE_NAME = String(process.env.LOVE_NAME || "Nayane").trim().slice(0, 60) || "Nayane";
+const IP_GEOLOCATION_ENABLED = process.env.IP_GEOLOCATION_ENABLED !== "false";
+const IP_GEOLOCATION_URL = process.env.IP_GEOLOCATION_URL || "https://ipwho.is/{ip}";
 const MAX_NAME_LENGTH = 60;
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -152,6 +155,55 @@ function validatePhotoBytes(bytes, contentType, requestId) {
   return { bytes, type: detectedType, filename: `${requestId}.${extension}` };
 }
 
+function getClientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  const candidate = forwarded || String(req.headers["x-real-ip"] || "").trim() || req.socket.remoteAddress || "";
+  const normalized = candidate.replace(/^::ffff:/, "");
+  return isIP(normalized) ? normalized : null;
+}
+
+function isPrivateIp(ip) {
+  return (
+    ip === "::1" ||
+    ip.startsWith("10.") ||
+    ip.startsWith("127.") ||
+    ip.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(ip) ||
+    ip.startsWith("fc") ||
+    ip.startsWith("fd") ||
+    ip.startsWith("fe80:")
+  );
+}
+
+async function getIpLocation(req) {
+  if (!IP_GEOLOCATION_ENABLED) return null;
+  const ip = getClientIp(req);
+  if (!ip || isPrivateIp(ip)) return null;
+
+  try {
+    const response = await fetch(IP_GEOLOCATION_URL.replace("{ip}", encodeURIComponent(ip)), {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data.success === false) return null;
+    const latitude = Number(data.latitude);
+    const longitude = Number(data.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+    return {
+      city: String(data.city || "").slice(0, 100),
+      region: String(data.region || "").slice(0, 100),
+      country: String(data.country || "").slice(0, 100),
+      latitude: Math.round(latitude * 100) / 100,
+      longitude: Math.round(longitude * 100) / 100,
+    };
+  } catch (error) {
+    console.warn("IP location lookup failed:", error.message);
+    return null;
+  }
+}
+
 async function sendPushover(name, responseUrl) {
   const token = process.env.PUSHOVER_APP_TOKEN;
   const user = process.env.PUSHOVER_USER_KEY;
@@ -195,12 +247,14 @@ async function createRequest(req, res) {
     return sendJson(res, 400, { error: "Please enter a name of up to 60 characters." });
   }
   const requesterLocation = normalizeLocation(body.location);
+  const ipLocation = await getIpLocation(req);
 
   const request = {
     id: randomUUID(),
     token: randomBytes(24).toString("base64url"),
     name,
     requesterLocation,
+    ipLocation,
     responderLocation: null,
     photo: null,
     value: null,
@@ -269,6 +323,7 @@ function getResponseRequest(res, token) {
     answered: request.value !== null,
     value: request.value,
     requesterLocation: request.requesterLocation || request.location || null,
+    ipLocation: request.ipLocation || null,
   });
 }
 
