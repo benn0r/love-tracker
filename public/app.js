@@ -99,15 +99,126 @@ function getApproximateLocation() {
 
 function showLoveMap(name, journey) {
   const map = document.querySelector("#love-map");
-  const destination = document.querySelector("#map-destination-name");
   const mapTitle = document.querySelector("#love-map-title");
   const latDirection = journey.to.latitude >= journey.from.latitude ? "north" : "south";
   const lonDirection = journey.to.longitude >= journey.from.longitude ? "east" : "west";
 
-  destination.textContent = name;
   mapTitle.textContent = `Love travelling ${latDirection}-${lonDirection} from his heart to ${name}`;
   map.classList.remove("hidden");
-  requestAnimationFrame(() => map.classList.add("map-animate"));
+  requestAnimationFrame(() => initializeRealMap(name, journey));
+}
+
+function initializeRealMap(name, journey) {
+  if (!window.L) return;
+  const origin = [journey.from.latitude, journey.from.longitude];
+  const destination = [journey.to.latitude, journey.to.longitude];
+  const map = L.map("real-map", {
+    attributionControl: true,
+    scrollWheelZoom: false,
+    zoomControl: true,
+  });
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+
+  const route = createArchedRoute(origin, destination);
+  const originIcon = L.divIcon({
+    className: "love-map-marker",
+    html: '<span class="marker-core">♥</span>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
+  const destinationIcon = L.divIcon({
+    className: "love-map-marker destination-marker",
+    html: '<span class="marker-core">♥</span><span class="marker-pulse"></span>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
+
+  L.marker(origin, { icon: originIcon })
+    .addTo(map)
+    .bindTooltip("His heart", { permanent: true, direction: "bottom", offset: [0, 12] });
+  L.marker(destination, { icon: destinationIcon })
+    .addTo(map)
+    .bindTooltip(name, { permanent: true, direction: "bottom", offset: [0, 12] });
+
+  L.polyline(route, {
+    color: "#bd3955",
+    weight: 4,
+    opacity: 0.85,
+    dashArray: "7 10",
+    lineCap: "round",
+    className: "arched-love-route",
+  }).addTo(map);
+
+  map.fitBounds(L.latLngBounds(route), {
+    padding: [58, 58],
+    maxZoom: 12,
+  });
+
+  const travellingIcon = L.divIcon({
+    className: "travelling-map-heart",
+    html: "♥",
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+  const travellingHeart = L.marker(origin, {
+    icon: travellingIcon,
+    interactive: false,
+    keyboard: false,
+    zIndexOffset: 1000,
+  }).addTo(map);
+
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    animateHeartAlongRoute(travellingHeart, route);
+  }
+}
+
+function createArchedRoute(from, to) {
+  const pointCount = 64;
+  let longitudeDelta = to[1] - from[1];
+  if (longitudeDelta > 180) longitudeDelta -= 360;
+  if (longitudeDelta < -180) longitudeDelta += 360;
+  const latitudeDelta = to[0] - from[0];
+  const distance = Math.hypot(latitudeDelta, longitudeDelta);
+  const arcStrength = Math.min(Math.max(distance * 0.22, 0.08), 24);
+  const normalLatitude = distance ? -longitudeDelta / distance : -1;
+  const normalLongitude = distance ? latitudeDelta / distance : 0;
+  const control = [
+    (from[0] + to[0]) / 2 + normalLatitude * arcStrength,
+    from[1] + longitudeDelta / 2 + normalLongitude * arcStrength,
+  ];
+
+  return Array.from({ length: pointCount + 1 }, (_, index) => {
+    const t = index / pointCount;
+    const inverse = 1 - t;
+    return [
+      inverse * inverse * from[0] + 2 * inverse * t * control[0] + t * t * to[0],
+      inverse * inverse * from[1] + 2 * inverse * t * control[1] + t * t * to[1],
+    ];
+  });
+}
+
+function animateHeartAlongRoute(marker, route) {
+  const duration = 3800;
+  let startedAt;
+
+  function frame(timestamp) {
+    if (!startedAt) startedAt = timestamp;
+    const progress = ((timestamp - startedAt) % duration) / duration;
+    const position = progress * (route.length - 1);
+    const index = Math.floor(position);
+    const nextIndex = Math.min(index + 1, route.length - 1);
+    const fraction = position - index;
+    marker.setLatLng([
+      route[index][0] + (route[nextIndex][0] - route[index][0]) * fraction,
+      route[index][1] + (route[nextIndex][1] - route[index][1]) * fraction,
+    ]);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 function pickResultMessage(value) {
