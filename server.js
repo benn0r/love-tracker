@@ -326,8 +326,11 @@ async function serveFile(res, pathname) {
   const filePath = normalize(join(PUBLIC_DIR, requested));
   if (!filePath.startsWith(PUBLIC_DIR)) return sendJson(res, 403, { error: "Forbidden" });
   try {
-    const content = await readFile(filePath);
+    let content = await readFile(filePath);
     const extension = extname(filePath);
+    if (extension === ".html") {
+      content = Buffer.from(content.toString().replaceAll("__APP_VERSION__", APP_VERSION));
+    }
     const noStoreExtensions = new Set([".html", ".js", ".css", ".webmanifest"]);
     const shouldNotStore = noStoreExtensions.has(extension);
     res.writeHead(200, {

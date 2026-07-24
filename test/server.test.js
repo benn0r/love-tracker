@@ -46,6 +46,15 @@ test("version endpoint identifies the running deployment", async () => {
   assert.deepEqual(await response.json(), { version: "test-bu" });
 });
 
+test("HTML embeds the deployment version in its footer and asset URLs", async () => {
+  const response = await fetch(`http://localhost:${port}/`);
+  const html = await response.text();
+  assert.match(html, />vtest-bu<\/span>/);
+  assert.match(html, /\/app\.js\?v=test-bu/);
+  assert.match(html, /\/styles\.css\?v=test-bu/);
+  assert.doesNotMatch(html, /__APP_VERSION__/);
+});
+
 test("application scripts are never stored so new reveal features load immediately", async () => {
   const response = await fetch(`http://localhost:${port}/app.js`);
   assert.equal(response.status, 200);

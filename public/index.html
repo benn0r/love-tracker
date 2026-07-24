@@ -13,9 +13,9 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="/styles.css?v=photo-reveal-3" />
+    <link rel="stylesheet" href="/styles.css?v=__APP_VERSION__" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
-    <script src="/app.js?v=photo-reveal-3" defer></script>
+    <script src="/app.js?v=__APP_VERSION__" defer></script>
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -42,10 +42,10 @@
               <span class="checkmark" aria-hidden="true">✓</span>
               <span>
                 <strong>Show our love journey</strong>
-                Share my approximate location for an animated OpenStreetMap journey
+                Share my approximate location for an animated love journey
               </span>
             </label>
-            <button type="submit">Send my love note <span>→</span></button>
+            <button type="submit">Ask <span>→</span></button>
             <p class="form-error" id="ask-error" role="alert"></p>
           </form>
         </div>
@@ -83,7 +83,7 @@
           <button class="quiet-button" id="again-button" type="button">Ask again</button>
         </div>
       </section>
-      <p class="signature">made with <span>♥</span> for Nayane <span class="version-separator">·</span> <span id="deployment-version" class="deployment-version">local</span></p>
+      <p class="signature">made with <span>♥</span> for Nayane <span class="version-separator">·</span> <span id="deployment-version" class="deployment-version">v__APP_VERSION__</span></p>
     </main>
   </body>
 </html>

@@ -5,13 +5,6 @@ const askForm = document.querySelector("#ask-form");
 const askError = document.querySelector("#ask-error");
 let pollTimer;
 
-fetch("/api/version", { cache: "no-store" })
-  .then((response) => response.json())
-  .then(({ version }) => {
-    document.querySelector("#deployment-version").textContent = `v${version}`;
-  })
-  .catch(() => {});
-
 askForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   askError.textContent = "";
@@ -39,7 +32,7 @@ askForm.addEventListener("submit", async (event) => {
   } catch (error) {
     askError.textContent = error.message || "Something went wrong. Please try again.";
     button.disabled = false;
-    button.firstChild.textContent = "Send my love note ";
+    button.firstChild.textContent = "Ask ";
   }
 });
 
