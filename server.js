@@ -1,6 +1,6 @@
 import http from "node:http";
 import { randomBytes, randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,6 +8,7 @@ const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
 const DATA_DIR = process.env.DATA_DIR || join(ROOT, "data");
 const DATA_FILE = join(DATA_DIR, "requests.json");
+const PHOTO_DIR = join(DATA_DIR, "photos");
 const PORT = Number(process.env.PORT || 3000);
 const MAX_NAME_LENGTH = 60;
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -27,6 +28,7 @@ let saveQueue = Promise.resolve();
 
 async function loadRequests() {
   await mkdir(DATA_DIR, { recursive: true });
+  await mkdir(PHOTO_DIR, { recursive: true });
   try {
     const stored = JSON.parse(await readFile(DATA_FILE, "utf8"));
     requests = new Map(stored.map((item) => [item.id, item]));
@@ -39,7 +41,12 @@ async function loadRequests() {
 function pruneExpired() {
   const cutoff = Date.now() - REQUEST_TTL_MS;
   for (const [id, item] of requests) {
-    if (new Date(item.createdAt).getTime() < cutoff) requests.delete(id);
+    if (new Date(item.createdAt).getTime() < cutoff) {
+      requests.delete(id);
+      if (item.photo?.filename) {
+        unlink(join(PHOTO_DIR, item.photo.filename)).catch(() => {});
+      }
+    }
   }
 }
 
@@ -62,11 +69,11 @@ function sendJson(res, status, value) {
   res.end(JSON.stringify(value));
 }
 
-async function readJson(req) {
+async function readJson(req, maxBytes = 10_000) {
   let raw = "";
   for await (const chunk of req) {
     raw += chunk;
-    if (raw.length > 10_000) throw new Error("Payload too large");
+    if (raw.length > maxBytes) throw new Error("Payload too large");
   }
   return JSON.parse(raw || "{}");
 }
@@ -96,6 +103,25 @@ function normalizeLocation(value) {
     latitude: Math.round(latitude * 100) / 100,
     longitude: Math.round(longitude * 100) / 100,
   };
+}
+
+function decodePhoto(dataUrl, requestId) {
+  if (!dataUrl) return null;
+  const match = String(dataUrl).match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) throw new Error("Unsupported photo format");
+  const bytes = Buffer.from(match[2], "base64");
+  if (!bytes.length || bytes.length > 1_500_000) throw new Error("Photo is too large");
+
+  const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+  const isPng = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  const isWebp =
+    bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+    bytes.subarray(8, 12).toString("ascii") === "WEBP";
+  if (!isJpeg && !isPng && !isWebp) throw new Error("Invalid photo data");
+
+  const type = isJpeg ? "image/jpeg" : isPng ? "image/png" : "image/webp";
+  const extension = isJpeg ? "jpg" : isPng ? "png" : "webp";
+  return { bytes, type, filename: `${requestId}.${extension}` };
 }
 
 async function sendPushover(name, responseUrl) {
@@ -147,6 +173,7 @@ async function createRequest(req, res) {
     name,
     requesterLocation,
     responderLocation: null,
+    photo: null,
     value: null,
     createdAt: new Date().toISOString(),
     answeredAt: null,
@@ -182,7 +209,27 @@ function getRequest(res, id) {
             to: request.requesterLocation || request.location,
           }
         : null,
+    photoUrl: request.value !== null && request.photo ? `/api/requests/${request.id}/photo` : null,
   });
+}
+
+async function getRequestPhoto(res, id) {
+  const request = requests.get(id);
+  if (!request || request.value === null || !request.photo?.filename) {
+    return sendJson(res, 404, { error: "Photo not found." });
+  }
+  try {
+    const content = await readFile(join(PHOTO_DIR, request.photo.filename));
+    res.writeHead(200, {
+      "Content-Type": request.photo.type,
+      "Content-Length": content.length,
+      "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff",
+    });
+    res.end(content);
+  } catch {
+    sendJson(res, 404, { error: "Photo not found." });
+  }
 }
 
 function getResponseRequest(res, token) {
@@ -201,7 +248,7 @@ async function answerRequest(req, res, token) {
 
   let body;
   try {
-    body = await readJson(req);
+    body = await readJson(req, 2_100_000);
   } catch {
     return sendJson(res, 400, { error: "That answer could not be read." });
   }
@@ -212,6 +259,16 @@ async function answerRequest(req, res, token) {
 
   request.value = value;
   request.responderLocation = normalizeLocation(body.location);
+  if (body.photo) {
+    let photo;
+    try {
+      photo = decodePhoto(body.photo, request.id);
+    } catch (error) {
+      return sendJson(res, 400, { error: error.message });
+    }
+    await writeFile(join(PHOTO_DIR, photo.filename), photo.bytes);
+    request.photo = { filename: photo.filename, type: photo.type };
+  }
   request.answeredAt = new Date().toISOString();
   await saveRequests();
   sendJson(res, 200, { ok: true, value });
@@ -248,6 +305,10 @@ const server = http.createServer(async (req, res) => {
 
     const requestMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)$/);
     if (req.method === "GET" && requestMatch) return getRequest(res, requestMatch[1]);
+    const requestPhotoMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)\/photo$/);
+    if (req.method === "GET" && requestPhotoMatch) {
+      return await getRequestPhoto(res, requestPhotoMatch[1]);
+    }
 
     const responseApiMatch = pathname.match(/^\/api\/respond\/([A-Za-z0-9_-]+)$/);
     if (responseApiMatch && req.method === "GET") return getResponseRequest(res, responseApiMatch[1]);

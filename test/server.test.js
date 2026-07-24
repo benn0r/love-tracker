@@ -62,6 +62,7 @@ test("creates and answers a love request", async () => {
     body: JSON.stringify({
       value: 875,
       location: { latitude: 47.3885, longitude: 8.175 },
+      photo: "data:image/jpeg;base64,/9j/2Q==",
     }),
   });
   assert.equal(answerResponse.status, 200);
@@ -76,7 +77,11 @@ test("creates and answers a love request", async () => {
       from: { latitude: 47.39, longitude: 8.18 },
       to: { latitude: 47.38, longitude: 8.54 },
     },
+    photoUrl: `/api/requests/${created.id}/photo`,
   });
+  const photoResponse = await fetch(`http://localhost:${port}/api/requests/${created.id}/photo`);
+  assert.equal(photoResponse.status, 200);
+  assert.equal(photoResponse.headers.get("content-type"), "image/jpeg");
 });
 
 test("rejects invalid names and percentages", async () => {

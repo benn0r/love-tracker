@@ -47,7 +47,9 @@ async function poll(id, name) {
   try {
     const response = await fetch(`/api/requests/${id}`);
     const data = await response.json();
-    if (data.status === "answered") return showResult(name, data.value, data.journey);
+    if (data.status === "answered") {
+      return showResult(name, data.value, data.journey, data.photoUrl);
+    }
     if (!response.ok) throw new Error(data.error);
   } catch (error) {
     console.error(error);
@@ -55,13 +57,14 @@ async function poll(id, name) {
   pollTimer = setTimeout(() => poll(id, name), 1800);
 }
 
-function showResult(name, value, journey) {
+function showResult(name, value, journey, photoUrl) {
   clearTimeout(pollTimer);
   waitingView.classList.add("hidden");
   resultView.classList.remove("hidden");
   document.querySelector("#result-name").textContent = name;
   document.querySelector("#result-message").textContent = pickResultMessage(value);
   if (journey) showLoveMap(name, journey);
+  if (photoUrl) showLovePhoto(photoUrl);
 
   const duration = 2200;
   const started = performance.now();
@@ -81,6 +84,16 @@ function showResult(name, value, journey) {
     if (progress < 1) requestAnimationFrame(animate);
   }
   requestAnimationFrame(animate);
+}
+
+function showLovePhoto(photoUrl) {
+  const figure = document.querySelector("#love-photo");
+  const image = document.querySelector("#result-photo");
+  image.src = photoUrl;
+  image.addEventListener("load", () => {
+    figure.classList.remove("hidden");
+    requestAnimationFrame(() => figure.classList.add("photo-reveal"));
+  }, { once: true });
 }
 
 function getApproximateLocation() {
