@@ -15,18 +15,16 @@ askForm.addEventListener("submit", async (event) => {
   button.firstChild.textContent = "Sending… ";
 
   try {
-    const ipLocationPromise = getIpBasedLocation();
     let location = null;
     if (wantsLocation) {
       button.firstChild.textContent = "Finding your place… ";
       location = await getApproximateLocation();
       button.firstChild.textContent = "Sending… ";
     }
-    const ipLocation = await ipLocationPromise;
     const response = await fetch("/api/requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, location, ipLocation }),
+      body: JSON.stringify({ name, location }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
@@ -37,33 +35,6 @@ askForm.addEventListener("submit", async (event) => {
     button.firstChild.textContent = "Ask ";
   }
 });
-
-async function getIpBasedLocation() {
-  const endpoint = document.querySelector('meta[name="ip-geolocation-url"]')?.content;
-  if (!endpoint) return null;
-  try {
-    const response = await fetch(endpoint, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (data.success === false) return null;
-    const latitude = Number(data.latitude);
-    const longitude = Number(data.longitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-    return {
-      city: String(data.city || "").slice(0, 100),
-      region: String(data.region || "").slice(0, 100),
-      country: String(data.country || "").slice(0, 100),
-      latitude: Math.round(latitude * 100) / 100,
-      longitude: Math.round(longitude * 100) / 100,
-    };
-  } catch {
-    return null;
-  }
-}
 
 function showWaiting(request) {
   askView.classList.add("hidden");
