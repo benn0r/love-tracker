@@ -50,17 +50,20 @@ jobs:
 
       - name: Build and push image
         shell: sh
+        env:
+          IMAGE_SHA: ${{ gitea.sha }}
+          IMAGE_REF: ${{ gitea.ref }}
         run: |
           image="git.example.com/benn0r/love-tracker"
-          docker build --tag "${image}:${GITEA_SHA}" .
-          docker push "${image}:${GITEA_SHA}"
+          docker build --tag "${image}:${IMAGE_SHA}" .
+          docker push "${image}:${IMAGE_SHA}"
 
-          if [ "${GITEA_REF}" = "refs/heads/main" ]; then
-            docker tag "${image}:${GITEA_SHA}" "${image}:latest"
+          if [ "${IMAGE_REF}" = "refs/heads/main" ]; then
+            docker tag "${image}:${IMAGE_SHA}" "${image}:latest"
             docker push "${image}:latest"
           fi
 
-          if [ "${GITEA_REF}" = "refs/heads/codex/gitea-registry-coolify-staging" ]; then
-            docker tag "${image}:${GITEA_SHA}" "${image}:staging"
+          if [ "${IMAGE_REF}" = "refs/heads/codex/gitea-registry-coolify-staging" ]; then
+            docker tag "${image}:${IMAGE_SHA}" "${image}:staging"
             docker push "${image}:staging"
           fi
