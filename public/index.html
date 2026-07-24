@@ -4,8 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#fff8f6" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Love Tracker" />
     <title>How much do you love me?</title>
     <meta name="description" content="Send a tiny love note and discover just how loved you are." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="stylesheet" href="/styles.css" />
     <script src="/app.js" defer></script>
   </head>
@@ -33,7 +39,6 @@
             <button type="submit">Send my love note <span>→</span></button>
             <p class="form-error" id="ask-error" role="alert"></p>
           </form>
-          <p class="privacy">Your name is only used for this one sweet question.</p>
         </div>
 
         <div id="waiting-view" class="hidden">
@@ -48,7 +53,10 @@
           <p class="eyebrow">The answer came from the heart</p>
           <h1><em id="result-name"></em>,<br />you are loved</h1>
           <div class="love-number"><span id="result-number">0</span><sup>%</sup></div>
-          <div class="progress-track"><div id="progress-fill"></div></div>
+          <div class="progress-track" role="progressbar" aria-label="Love meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="progress-fill"></div>
+          </div>
+          <div class="progress-scale" aria-hidden="true"><span>0</span><span>100</span></div>
           <p id="result-message" class="result-message"></p>
           <button class="quiet-button" id="again-button" type="button">Ask again</button>
         </div>

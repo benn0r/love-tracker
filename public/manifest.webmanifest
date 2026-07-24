@@ -1,0 +1,23 @@
+{
+  "name": "Love Tracker",
+  "short_name": "Love",
+  "description": "A little question from the heart.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8f6",
+  "theme_color": "#fff8f6",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

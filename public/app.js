@@ -63,13 +63,17 @@ function showResult(name, value) {
   const started = performance.now();
   const number = document.querySelector("#result-number");
   const fill = document.querySelector("#progress-fill");
+  const progressBar = document.querySelector(".progress-track");
+  const normalizedValue = Math.min(value / 10, 100);
   document.body.classList.add("celebrate");
 
   function animate(now) {
     const progress = Math.min((now - started) / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 4);
     number.textContent = Math.round(value * eased);
-    fill.style.width = `${Math.min(value / 10, 100) * eased}%`;
+    const displayedProgress = normalizedValue * eased;
+    fill.style.width = `${displayedProgress}%`;
+    progressBar.setAttribute("aria-valuenow", String(Math.round(displayedProgress)));
     if (progress < 1) requestAnimationFrame(animate);
   }
   requestAnimationFrame(animate);
