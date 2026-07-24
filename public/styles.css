@@ -119,7 +119,7 @@ h1 em { color: var(--rose); font-weight: 400; }
 
 .intro-question {
   display: block;
-  margin-bottom: .25rem;
+  margin-bottom: .55rem;
   color: var(--ink);
   font-family: "DM Sans", system-ui, sans-serif;
   font-size: .78rem;
