@@ -88,6 +88,14 @@ test("creates and answers a love request", async () => {
   const token = responseUrl.split("/").pop();
   assert.ok(token);
 
+  const privateRequestResponse = await fetch(`http://localhost:${port}/api/respond/${token}`);
+  assert.deepEqual(await privateRequestResponse.json(), {
+    name: "Nayane",
+    answered: false,
+    value: null,
+    requesterLocation: { latitude: 47.38, longitude: 8.54 },
+  });
+
   const photoUploadResponse = await fetch(`http://localhost:${port}/api/respond/${token}/photo`, {
     method: "POST",
     headers: { "Content-Type": "image/jpeg" },

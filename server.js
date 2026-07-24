@@ -268,6 +268,7 @@ function getResponseRequest(res, token) {
     name: request.name,
     answered: request.value !== null,
     value: request.value,
+    requesterLocation: request.requesterLocation || request.location || null,
   });
 }
 

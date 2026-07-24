@@ -313,6 +313,8 @@ button span { margin-left: .45rem; }
 .quiet-button:hover { box-shadow: none; }
 
 .response-card { max-width: 650px; margin: auto; }
+.answer-location-map { margin: -0.35rem 0 1.5rem; }
+.answer-location-map .real-map { height: 220px; }
 .number-wrap { max-width: 210px; margin: 0 auto 1rem; }
 .number-wrap input { padding: .8rem 2.8rem .8rem 1rem; text-align: center; font-family: "Italiana", Georgia, serif; font-size: 2rem; }
 .number-wrap span { position: absolute; right: 1rem; color: var(--rose); font-size: 1.2rem; }

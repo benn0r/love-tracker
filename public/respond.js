@@ -34,6 +34,7 @@ async function loadRequest() {
     personName = data.name;
     document.querySelector("#person-name").textContent = data.name;
     document.querySelector("#sent-name").textContent = data.name;
+    if (data.requesterLocation) showRequesterLocation(data.name, data.requesterLocation);
     if (data.answered) {
       valueInput.value = data.value;
       showSent();
@@ -41,6 +42,39 @@ async function loadRequest() {
   } catch (error) {
     formView.innerHTML = `<p class="eyebrow">This note has faded</p><h1><em>Link expired.</em></h1><p class="intro">${escapeHtml(error.message)}</p>`;
   }
+}
+
+function showRequesterLocation(name, location) {
+  const mapSection = document.querySelector("#request-location-map");
+  document.querySelector("#request-location-title").textContent = `${name}'s approximate location`;
+  document.querySelector("#request-location-caption").textContent = `${name}'s question is coming from here.`;
+  mapSection.classList.remove("hidden");
+
+  requestAnimationFrame(() => {
+    if (!window.L) return;
+    const coordinates = [location.latitude, location.longitude];
+    const map = L.map("request-real-map", {
+      attributionControl: true,
+      scrollWheelZoom: false,
+      zoomControl: true,
+    }).setView(coordinates, 10);
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    const heartIcon = L.divIcon({
+      className: "love-map-marker destination-marker",
+      html: '<span class="marker-core">♥</span><span class="marker-pulse"></span>',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    });
+
+    L.marker(coordinates, { icon: heartIcon })
+      .addTo(map)
+      .bindTooltip(`${name}'s heart`, { permanent: true, direction: "bottom", offset: [0, 12] });
+  });
 }
 
 form.addEventListener("submit", async (event) => {
