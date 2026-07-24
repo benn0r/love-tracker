@@ -36,6 +36,10 @@ async function loadRequest() {
     document.querySelector("#sent-name").textContent = data.name;
     if (data.requesterLocation || data.ipLocation) {
       showRequesterLocation(data.name, data.requesterLocation, data.ipLocation);
+    } else {
+      const status = document.querySelector("#ip-verification-status");
+      status.textContent = "IP-based location was unavailable for this request. If this question was created before location verification was added, ask for a new link.";
+      status.classList.remove("hidden");
     }
     if (data.answered) {
       valueInput.value = data.value;

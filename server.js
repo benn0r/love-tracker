@@ -156,10 +156,26 @@ function validatePhotoBytes(bytes, contentType, requestId) {
 }
 
 function getClientIp(req) {
-  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  const candidate = forwarded || String(req.headers["x-real-ip"] || "").trim() || req.socket.remoteAddress || "";
-  const normalized = candidate.replace(/^::ffff:/, "");
-  return isIP(normalized) ? normalized : null;
+  const candidates = [
+    req.headers["cf-connecting-ip"],
+    req.headers["true-client-ip"],
+    req.headers["x-real-ip"],
+    ...String(req.headers["x-forwarded-for"] || "").split(","),
+    req.socket.remoteAddress,
+  ];
+
+  for (const candidate of candidates) {
+    let normalized = String(candidate || "").trim().replace(/^["']|["']$/g, "");
+    if (normalized.startsWith("[") && normalized.includes("]")) {
+      normalized = normalized.slice(1, normalized.indexOf("]"));
+    }
+    normalized = normalized.replace(/^::ffff:/, "");
+    if (!isIP(normalized) && /^\d{1,3}(?:\.\d{1,3}){3}:\d+$/.test(normalized)) {
+      normalized = normalized.slice(0, normalized.lastIndexOf(":"));
+    }
+    if (isIP(normalized) && !isPrivateIp(normalized)) return normalized;
+  }
+  return null;
 }
 
 function isPrivateIp(ip) {
@@ -178,26 +194,40 @@ function isPrivateIp(ip) {
 async function getIpLocation(req) {
   if (!IP_GEOLOCATION_ENABLED) return null;
   const ip = getClientIp(req);
-  if (!ip || isPrivateIp(ip)) return null;
+  if (!ip) {
+    console.warn("IP location unavailable: no public client address was forwarded");
+    return null;
+  }
 
   try {
     const response = await fetch(IP_GEOLOCATION_URL.replace("{ip}", encodeURIComponent(ip)), {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(4000),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn(`IP location unavailable: provider returned ${response.status}`);
+      return null;
+    }
     const data = await response.json();
-    if (data.success === false) return null;
+    if (data.success === false) {
+      console.warn("IP location unavailable: provider rejected the lookup");
+      return null;
+    }
     const latitude = Number(data.latitude);
     const longitude = Number(data.longitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-    return {
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      console.warn("IP location unavailable: provider returned no coordinates");
+      return null;
+    }
+    const location = {
       city: String(data.city || "").slice(0, 100),
       region: String(data.region || "").slice(0, 100),
       country: String(data.country || "").slice(0, 100),
       latitude: Math.round(latitude * 100) / 100,
       longitude: Math.round(longitude * 100) / 100,
     };
+    console.log(`IP location resolved: ${[location.city, location.region, location.country].filter(Boolean).join(", ")}`);
+    return location;
   } catch (error) {
     console.warn("IP location lookup failed:", error.message);
     return null;
