@@ -11,6 +11,7 @@ const DATA_FILE = join(DATA_DIR, "requests.json");
 const PHOTO_DIR = join(DATA_DIR, "photos");
 const PORT = Number(process.env.PORT || 3000);
 const APP_VERSION = String(process.env.APP_VERSION || process.env.SOURCE_COMMIT || "local").slice(0, 7);
+const LOVE_NAME = String(process.env.LOVE_NAME || "Nayane").trim().slice(0, 60) || "Nayane";
 const MAX_NAME_LENGTH = 60;
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -329,7 +330,20 @@ async function serveFile(res, pathname) {
     let content = await readFile(filePath);
     const extension = extname(filePath);
     if (extension === ".html") {
-      content = Buffer.from(content.toString().replaceAll("__APP_VERSION__", APP_VERSION));
+      const escapeHtml = (value) =>
+        value.replace(/[&<>"']/g, (character) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[character]);
+      content = Buffer.from(
+        content
+          .toString()
+          .replaceAll("__APP_VERSION__", APP_VERSION)
+          .replaceAll("__LOVE_NAME__", escapeHtml(LOVE_NAME)),
+      );
     }
     const noStoreExtensions = new Set([".html", ".js", ".css", ".webmanifest"]);
     const shouldNotStore = noStoreExtensions.has(extension);

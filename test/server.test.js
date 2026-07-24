@@ -14,6 +14,7 @@ const server = spawn(process.execPath, ["server.js"], {
     DATA_DIR: dataDir,
     NODE_ENV: "test",
     APP_VERSION: "test-build",
+    LOVE_NAME: "Nayane & Ben",
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -52,7 +53,10 @@ test("HTML embeds the deployment version in its footer and asset URLs", async ()
   assert.match(html, />vtest-bu<\/span>/);
   assert.match(html, /\/app\.js\?v=test-bu/);
   assert.match(html, /\/styles\.css\?v=test-bu/);
+  assert.match(html, /made with <span>♥<\/span> for Nayane &amp; Ben/);
+  assert.match(html, /placeholder="e\.g\. Nayane &amp; Ben"/);
   assert.doesNotMatch(html, /__APP_VERSION__/);
+  assert.doesNotMatch(html, /__LOVE_NAME__/);
 });
 
 test("application scripts are never stored so new reveal features load immediately", async () => {
