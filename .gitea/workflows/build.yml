@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest-slim
     container: node:22.13.0-bookworm
     timeout-minutes: 15
@@ -21,3 +21,46 @@ jobs:
 
       - name: Test
         run: npm test
+
+  publish-image:
+    if: gitea.event_name == 'push'
+    runs-on: ubuntu-latest-slim
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Gitea Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: git.example.com
+          username: ${{ gitea.actor }}
+          password: ${{ secrets.GITEA_TOKEN }}
+
+      - name: Set image tags
+        id: image
+        shell: sh
+        run: |
+          tags="git.example.com/benn0r/love-tracker:${GITEA_SHA}"
+          if [ "${GITEA_REF}" = "refs/heads/main" ]; then
+            tags="$(printf '%s\n%s' "${tags}" "git.example.com/benn0r/love-tracker:latest")"
+          fi
+          if [ "${GITEA_REF}" = "refs/heads/codex/gitea-registry-coolify-staging" ]; then
+            tags="$(printf '%s\n%s' "${tags}" "git.example.com/benn0r/love-tracker:staging")"
+          fi
+          {
+            echo "tags<<EOF"
+            echo "${tags}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.image.outputs.tags }}

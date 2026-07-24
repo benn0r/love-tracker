@@ -81,6 +81,19 @@ and stores requests and photos in the persistent `love-tracker-data` volume.
 
 The health check endpoint is `GET /health`.
 
+### Gitea Container Registry
+
+The Gitea Actions workflow tests the app, builds its Docker image on pushes, and
+publishes it to:
+
+```text
+git.example.com/benn0r/love-tracker
+```
+
+Every image receives an immutable full-commit tag. Pushes to `main` also update
+`latest`; pushes to `codex/gitea-registry-coolify-staging` update `staging`.
+The workflow uses Gitea's built-in job token with `packages: write` permission.
+
 ## Privacy and lifecycle
 
 Browser geolocation remains opt-in and controls the animated journey map. Unless
