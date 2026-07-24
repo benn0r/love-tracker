@@ -53,17 +53,17 @@ jobs:
         env:
           IMAGE_SHA: ${{ gitea.sha }}
           IMAGE_REF: ${{ gitea.ref }}
+          IMAGE_BRANCH: ${{ gitea.ref_name }}
         run: |
           image="git.example.com/benn0r/love-tracker"
+          branch_tag="$(printf '%s' "${IMAGE_BRANCH}" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#[^a-z0-9_.-]#-#g')"
+
           docker build --tag "${image}:${IMAGE_SHA}" .
           docker push "${image}:${IMAGE_SHA}"
 
-          if [ "${IMAGE_REF}" = "refs/heads/main" ]; then
-            docker tag "${image}:${IMAGE_SHA}" "${image}:latest"
-            docker push "${image}:latest"
-          fi
-
-          if [ "${IMAGE_REF}" = "refs/heads/codex/gitea-registry-coolify-staging" ]; then
-            docker tag "${image}:${IMAGE_SHA}" "${image}:staging"
-            docker push "${image}:staging"
+          if [ "${IMAGE_REF#refs/heads/}" != "${IMAGE_REF}" ]; then
+            docker tag "${image}:${IMAGE_SHA}" "${image}:${branch_tag}"
+            docker push "${image}:${branch_tag}"
           fi
