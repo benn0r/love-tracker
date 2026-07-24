@@ -74,6 +74,44 @@ function sendJson(res, status, value) {
   res.end(JSON.stringify(value));
 }
 
+function redactRequestPath(rawUrl) {
+  try {
+    const pathname = new URL(rawUrl || "/", "http://localhost").pathname;
+    return pathname
+      .replace(/^\/respond\/[^/]+/, "/respond/[redacted]")
+      .replace(/^\/api\/respond\/[^/]+/, "/api/respond/[redacted]")
+      .replace(/^\/api\/requests\/[^/]+/, "/api/requests/[redacted]");
+  } catch {
+    return "/[invalid-url]";
+  }
+}
+
+function logRequest(req, res) {
+  const startedAt = Date.now();
+  const request = {
+    method: req.method || "UNKNOWN",
+    path: redactRequestPath(req.url),
+  };
+  let logged = false;
+
+  const writeLog = (outcome) => {
+    if (logged) return;
+    logged = true;
+    console.log(JSON.stringify({
+      type: "http_request",
+      ...request,
+      status: res.statusCode,
+      durationMs: Date.now() - startedAt,
+      outcome,
+    }));
+  };
+
+  res.once("finish", () => writeLog("completed"));
+  res.once("close", () => {
+    if (!res.writableFinished) writeLog("aborted");
+  });
+}
+
 async function readJson(req, maxBytes = 10_000) {
   let raw = "";
   for await (const chunk of req) {
@@ -448,6 +486,7 @@ async function serveFile(res, pathname) {
 }
 
 const server = http.createServer(async (req, res) => {
+  logRequest(req, res);
   const url = new URL(req.url, "http://localhost");
   const pathname = decodeURIComponent(url.pathname);
 
