@@ -64,7 +64,7 @@ function showResult(name, value) {
   const number = document.querySelector("#result-number");
   const fill = document.querySelector("#progress-fill");
   const progressBar = document.querySelector(".progress-track");
-  const normalizedValue = Math.min(value / 10, 100);
+  const normalizedValue = Math.min(value, 100);
   document.body.classList.add("celebrate");
 
   function animate(now) {

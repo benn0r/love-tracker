@@ -217,9 +217,8 @@ button span { margin-left: .45rem; }
   line-height: 1;
 }
 .love-number sup { font-size: .3em; vertical-align: super; }
-.progress-track { height: 10px; margin: 0 auto; overflow: hidden; border-radius: 99px; background: #f0dedd; }
+.progress-track { height: 10px; margin: 0 auto 1.5rem; overflow: hidden; border-radius: 99px; background: #f0dedd; }
 #progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #dc8790, var(--rose)); box-shadow: 0 0 14px rgba(201,72,97,.5); }
-.progress-scale { display: flex; justify-content: space-between; margin: .45rem 0 1.5rem; color: #a1888c; font-size: .68rem; }
 .result-message { color: var(--muted); font-family: Georgia, serif; font-style: italic; }
 .quiet-button { width: auto; margin-top: 1rem; padding: .7rem 1.2rem; color: var(--rose); background: transparent; box-shadow: none; border: 1px solid var(--blush); }
 .quiet-button:hover { box-shadow: none; }
