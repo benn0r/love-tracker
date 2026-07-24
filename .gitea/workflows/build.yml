@@ -45,7 +45,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: git.example.com
-          username: ${{ gitea.actor }}
+          username: benn0r
           password: ${{ secrets.GITEA_TOKEN }}
 
       - name: Set image tags
