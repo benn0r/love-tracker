@@ -117,7 +117,7 @@ function showRequesterLocation(name, sharedLocation, ipLocation) {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   errorElement.textContent = "";
-  const button = form.querySelector("button");
+  const button = form.querySelector('button[type="submit"]');
   const buttonLabel = button.querySelector("[data-button-label]");
   button.disabled = true;
   try {

@@ -70,6 +70,7 @@ test("private answer HTML carries the same deployment footer and fresh asset URL
   assert.match(html, /\/i18n\.js\?v=test-bu/);
   assert.match(html, /\/styles\.css\?v=test-bu/);
   assert.doesNotMatch(html, /__(APP_VERSION|LOVE_NAME)__/);
+  assert.match(html, /<button type="submit"><span data-button-label/);
 });
 
 test("application scripts are never stored so new reveal features load immediately", async () => {
