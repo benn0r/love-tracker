@@ -10,6 +10,7 @@ const DATA_DIR = process.env.DATA_DIR || join(ROOT, "data");
 const DATA_FILE = join(DATA_DIR, "requests.json");
 const PHOTO_DIR = join(DATA_DIR, "photos");
 const PORT = Number(process.env.PORT || 3000);
+const APP_VERSION = String(process.env.APP_VERSION || process.env.SOURCE_COMMIT || "local").slice(0, 7);
 const MAX_NAME_LENGTH = 60;
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -350,6 +351,9 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.method === "GET" && pathname === "/health") {
       return sendJson(res, 200, { status: "ok" });
+    }
+    if (req.method === "GET" && pathname === "/api/version") {
+      return sendJson(res, 200, { version: APP_VERSION });
     }
     if (req.method === "POST" && pathname === "/api/requests") {
       return await createRequest(req, res);

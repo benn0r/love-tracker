@@ -225,6 +225,17 @@ button span { margin-left: .45rem; }
 }
 .signature { margin: 1.4rem 0 0; text-align: center; letter-spacing: .03em; }
 .signature span { color: var(--rose); }
+.signature .version-separator { margin: 0 .2rem; color: #bba5a8; }
+.signature .deployment-version {
+  display: inline-block;
+  padding: .12rem .38rem;
+  border: 1px solid rgba(201,72,97,.15);
+  border-radius: 99px;
+  color: #9d8589;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .62rem;
+  letter-spacing: 0;
+}
 .form-error { min-height: 1.2rem; margin: .7rem 0 0; color: #a22742; font-size: .82rem; }
 .hidden { display: none !important; }
 

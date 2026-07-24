@@ -8,7 +8,13 @@ import { join } from "node:path";
 const port = 43871;
 const dataDir = await mkdtemp(join(tmpdir(), "love-tracker-"));
 const server = spawn(process.execPath, ["server.js"], {
-  env: { ...process.env, PORT: String(port), DATA_DIR: dataDir, NODE_ENV: "test" },
+  env: {
+    ...process.env,
+    PORT: String(port),
+    DATA_DIR: dataDir,
+    NODE_ENV: "test",
+    APP_VERSION: "test-build",
+  },
   stdio: ["ignore", "pipe", "pipe"],
 });
 
@@ -32,6 +38,12 @@ test("health endpoint reports ready", async () => {
   const response = await fetch(`http://localhost:${port}/health`);
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { status: "ok" });
+});
+
+test("version endpoint identifies the running deployment", async () => {
+  const response = await fetch(`http://localhost:${port}/api/version`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { version: "test-bu" });
 });
 
 test("application scripts are never stored so new reveal features load immediately", async () => {
