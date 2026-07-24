@@ -78,6 +78,17 @@ async function readJson(req, maxBytes = 10_000) {
   return JSON.parse(raw || "{}");
 }
 
+async function readBuffer(req, maxBytes = 2_000_000) {
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > maxBytes) throw new Error("Payload too large");
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 function getBaseUrl(req) {
   if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/$/, "");
   const protocol = req.headers["x-forwarded-proto"] || "http";
@@ -122,6 +133,21 @@ function decodePhoto(dataUrl, requestId) {
   const type = isJpeg ? "image/jpeg" : isPng ? "image/png" : "image/webp";
   const extension = isJpeg ? "jpg" : isPng ? "png" : "webp";
   return { bytes, type, filename: `${requestId}.${extension}` };
+}
+
+function validatePhotoBytes(bytes, contentType, requestId) {
+  if (!bytes.length || bytes.length > 2_000_000) throw new Error("Photo is too large");
+  const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
+  const isPng = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  const isWebp =
+    bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
+    bytes.subarray(8, 12).toString("ascii") === "WEBP";
+  if (!isJpeg && !isPng && !isWebp) throw new Error("Invalid photo data");
+
+  const detectedType = isJpeg ? "image/jpeg" : isPng ? "image/png" : "image/webp";
+  if (contentType && !contentType.startsWith(detectedType)) throw new Error("Photo type mismatch");
+  const extension = isJpeg ? "jpg" : isPng ? "png" : "webp";
+  return { bytes, type: detectedType, filename: `${requestId}.${extension}` };
 }
 
 async function sendPushover(name, responseUrl) {
@@ -274,6 +300,25 @@ async function answerRequest(req, res, token) {
   sendJson(res, 200, { ok: true, value });
 }
 
+async function uploadResponsePhoto(req, res, token) {
+  const request = [...requests.values()].find((item) => item.token === token);
+  if (!request) return sendJson(res, 404, { error: "This private link has expired." });
+  if (request.value !== null) return sendJson(res, 409, { error: "This love note was already answered." });
+
+  try {
+    const bytes = await readBuffer(req);
+    const photo = validatePhotoBytes(bytes, String(req.headers["content-type"] || ""), request.id);
+    await writeFile(join(PHOTO_DIR, photo.filename), photo.bytes);
+    request.photo = { filename: photo.filename, type: photo.type };
+    await saveRequests();
+    console.log(`Photo saved for request ${request.id} (${photo.bytes.length} bytes)`);
+    sendJson(res, 201, { saved: true, bytes: photo.bytes.length });
+  } catch (error) {
+    console.error("Could not save response photo:", error.message);
+    sendJson(res, 400, { error: error.message || "The photo could not be saved." });
+  }
+}
+
 async function serveFile(res, pathname) {
   const requested = pathname === "/" ? "index.html" : pathname.slice(1);
   const filePath = normalize(join(PUBLIC_DIR, requested));
@@ -316,6 +361,10 @@ const server = http.createServer(async (req, res) => {
     if (responseApiMatch && req.method === "GET") return getResponseRequest(res, responseApiMatch[1]);
     if (responseApiMatch && req.method === "POST") {
       return await answerRequest(req, res, responseApiMatch[1]);
+    }
+    const responsePhotoMatch = pathname.match(/^\/api\/respond\/([A-Za-z0-9_-]+)\/photo$/);
+    if (responsePhotoMatch && req.method === "POST") {
+      return await uploadResponsePhoto(req, res, responsePhotoMatch[1]);
     }
 
     if (req.method === "GET" && /^\/respond\/[A-Za-z0-9_-]+$/.test(pathname)) {

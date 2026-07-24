@@ -10,6 +10,7 @@ const photoPreviewWrap = document.querySelector("#photo-preview-wrap");
 const errorElement = document.querySelector("#response-error");
 let personName = "";
 let selectedPhoto = null;
+let submittedWithPhoto = false;
 
 valueInput.addEventListener("input", () => {
   rangeInput.value = Math.max(0, Math.min(1000, Number(valueInput.value) || 0));
@@ -52,11 +53,24 @@ form.addEventListener("submit", async (event) => {
     const location = await getApproximateLocation();
     button.firstChild.textContent = selectedPhoto ? "Preparing your photo… " : "Sending my answer… ";
     const photo = selectedPhoto ? await compressPhoto(selectedPhoto) : null;
+    if (photo) {
+      button.firstChild.textContent = "Uploading your photo… ";
+      const photoResponse = await fetch(`/api/respond/${token}/photo`, {
+        method: "POST",
+        headers: { "Content-Type": photo.type },
+        body: photo,
+      });
+      const photoResult = await photoResponse.json();
+      if (!photoResponse.ok || !photoResult.saved) {
+        throw new Error(photoResult.error || "Your photo could not be saved.");
+      }
+      submittedWithPhoto = true;
+    }
     button.firstChild.textContent = "Sending my answer… ";
     const response = await fetch(`/api/respond/${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value: Number(valueInput.value), location, photo }),
+      body: JSON.stringify({ value: Number(valueInput.value), location }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
@@ -82,14 +96,18 @@ function compressPhoto(file) {
     const image = new Image();
     const objectUrl = URL.createObjectURL(file);
     image.onload = () => {
-      const maxDimension = 1400;
+      const maxDimension = 1000;
       const scale = Math.min(maxDimension / image.width, maxDimension / image.height, 1);
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(image.width * scale));
       canvas.height = Math.max(1, Math.round(image.height * scale));
       canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(objectUrl);
-      resolve(canvas.toDataURL("image/jpeg", 0.82));
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error("That photo could not be prepared.")),
+        "image/jpeg",
+        0.72,
+      );
     };
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
@@ -116,6 +134,9 @@ function getApproximateLocation() {
 function showSent() {
   formView.classList.add("hidden");
   sentView.classList.remove("hidden");
+  if (submittedWithPhoto) {
+    document.querySelector("#sent-copy").innerHTML = `<span id="sent-name">${escapeHtml(personName)}</span> can see your answer and photo now. You may close this page.`;
+  }
   document.body.classList.add("celebrate");
 }
 

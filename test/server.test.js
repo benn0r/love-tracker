@@ -62,13 +62,20 @@ test("creates and answers a love request", async () => {
   const token = responseUrl.split("/").pop();
   assert.ok(token);
 
+  const photoUploadResponse = await fetch(`http://localhost:${port}/api/respond/${token}/photo`, {
+    method: "POST",
+    headers: { "Content-Type": "image/jpeg" },
+    body: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+  });
+  assert.equal(photoUploadResponse.status, 201);
+  assert.equal((await photoUploadResponse.json()).saved, true);
+
   const answerResponse = await fetch(`http://localhost:${port}/api/respond/${token}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       value: 875,
       location: { latitude: 47.3885, longitude: 8.175 },
-      photo: "data:image/jpeg;base64,/9j/2Q==",
     }),
   });
   assert.equal(answerResponse.status, 200);
