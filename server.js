@@ -15,6 +15,7 @@ const APP_VERSION = String(process.env.APP_VERSION || process.env.SOURCE_COMMIT 
 const LOVE_NAME = String(process.env.LOVE_NAME || "Nayane").trim().slice(0, 60) || "Nayane";
 const IP_GEOLOCATION_ENABLED = process.env.IP_GEOLOCATION_ENABLED !== "false";
 const IP_GEOLOCATION_URL = process.env.IP_GEOLOCATION_URL || "https://ipwho.is/{ip}";
+const IP_GEOLOCATION_BROWSER_URL = process.env.IP_GEOLOCATION_BROWSER_URL || "https://ipwho.is/";
 const MAX_NAME_LENGTH = 60;
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -118,6 +119,17 @@ function normalizeLocation(value) {
   return {
     latitude: Math.round(latitude * 100) / 100,
     longitude: Math.round(longitude * 100) / 100,
+  };
+}
+
+function normalizeIpLocation(value) {
+  const location = normalizeLocation(value);
+  if (!location) return null;
+  return {
+    city: String(value?.city || "").slice(0, 100),
+    region: String(value?.region || "").slice(0, 100),
+    country: String(value?.country || "").slice(0, 100),
+    ...location,
   };
 }
 
@@ -277,7 +289,8 @@ async function createRequest(req, res) {
     return sendJson(res, 400, { error: "Please enter a name of up to 60 characters." });
   }
   const requesterLocation = normalizeLocation(body.location);
-  const ipLocation = await getIpLocation(req);
+  const browserIpLocation = IP_GEOLOCATION_ENABLED ? normalizeIpLocation(body.ipLocation) : null;
+  const ipLocation = browserIpLocation || await getIpLocation(req);
 
   const request = {
     id: randomUUID(),
@@ -428,7 +441,11 @@ async function serveFile(res, pathname) {
         content
           .toString()
           .replaceAll("__APP_VERSION__", APP_VERSION)
-          .replaceAll("__LOVE_NAME__", escapeHtml(LOVE_NAME)),
+          .replaceAll("__LOVE_NAME__", escapeHtml(LOVE_NAME))
+          .replaceAll(
+            "__IP_GEOLOCATION_BROWSER_URL__",
+            escapeHtml(IP_GEOLOCATION_ENABLED ? IP_GEOLOCATION_BROWSER_URL : ""),
+          ),
       );
     }
     const noStoreExtensions = new Set([".html", ".js", ".css", ".webmanifest"]);

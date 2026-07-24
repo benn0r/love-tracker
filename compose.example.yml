@@ -11,6 +11,7 @@ services:
       LOVE_NAME: "${LOVE_NAME:-Nayane}"
       IP_GEOLOCATION_ENABLED: "${IP_GEOLOCATION_ENABLED:-true}"
       IP_GEOLOCATION_URL: "${IP_GEOLOCATION_URL:-https://ipwho.is/{ip}}"
+      IP_GEOLOCATION_BROWSER_URL: "${IP_GEOLOCATION_BROWSER_URL:-https://ipwho.is/}"
     volumes:
       - love-tracker-data:/data
 

@@ -15,7 +15,7 @@ const server = spawn(process.execPath, ["server.js"], {
     NODE_ENV: "test",
     APP_VERSION: "test-build",
     LOVE_NAME: "Nayane & Ben",
-    IP_GEOLOCATION_ENABLED: "false",
+    IP_GEOLOCATION_ENABLED: "true",
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -90,6 +90,13 @@ test("creates and answers a love request", async () => {
     body: JSON.stringify({
       name: "Nayane",
       location: { latitude: 47.3769, longitude: 8.5417 },
+      ipLocation: {
+        city: "Lenzburg",
+        region: "Aargau",
+        country: "Switzerland",
+        latitude: 47.39,
+        longitude: 8.18,
+      },
     }),
   });
   assert.equal(createResponse.status, 201);
@@ -105,7 +112,13 @@ test("creates and answers a love request", async () => {
     answered: false,
     value: null,
     requesterLocation: { latitude: 47.38, longitude: 8.54 },
-    ipLocation: null,
+    ipLocation: {
+      city: "Lenzburg",
+      region: "Aargau",
+      country: "Switzerland",
+      latitude: 47.39,
+      longitude: 8.18,
+    },
   });
 
   const photoUploadResponse = await fetch(`http://localhost:${port}/api/respond/${token}/photo`, {
