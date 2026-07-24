@@ -117,6 +117,18 @@ h1 em { color: var(--rose); font-weight: 400; }
   line-height: 1.65;
 }
 
+.intro-question {
+  display: block;
+  margin-bottom: .25rem;
+  color: var(--ink);
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: .78rem;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
 form { max-width: 410px; margin: 0 auto; }
 label {
   display: block;
