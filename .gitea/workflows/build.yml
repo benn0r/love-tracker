@@ -38,9 +38,8 @@ jobs:
         shell: sh
         run: |
           apt-get update
-          apt-get install --yes docker.io docker-buildx
+          apt-get install --yes docker.io
           docker version
-          docker buildx version
 
       - name: Log in to Gitea Container Registry
         uses: docker/login-action@v3
@@ -49,26 +48,19 @@ jobs:
           username: benn0r
           password: ${{ secrets.REGISTRY_TOKEN }}
 
-      - name: Set image tags
-        id: image
+      - name: Build and push image
         shell: sh
         run: |
-          tags="git.example.com/benn0r/love-tracker:${GITEA_SHA}"
-          if [ "${GITEA_REF}" = "refs/heads/main" ]; then
-            tags="$(printf '%s\n%s' "${tags}" "git.example.com/benn0r/love-tracker:latest")"
-          fi
-          if [ "${GITEA_REF}" = "refs/heads/codex/gitea-registry-coolify-staging" ]; then
-            tags="$(printf '%s\n%s' "${tags}" "git.example.com/benn0r/love-tracker:staging")"
-          fi
-          {
-            echo "tags<<EOF"
-            echo "${tags}"
-            echo "EOF"
-          } >> "${GITHUB_OUTPUT}"
+          image="git.example.com/benn0r/love-tracker"
+          docker build --tag "${image}:${GITEA_SHA}" .
+          docker push "${image}:${GITEA_SHA}"
 
-      - name: Build and push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.image.outputs.tags }}
+          if [ "${GITEA_REF}" = "refs/heads/main" ]; then
+            docker tag "${image}:${GITEA_SHA}" "${image}:latest"
+            docker push "${image}:latest"
+          fi
+
+          if [ "${GITEA_REF}" = "refs/heads/codex/gitea-registry-coolify-staging" ]; then
+            docker tag "${image}:${GITEA_SHA}" "${image}:staging"
+            docker push "${image}:staging"
+          fi
