@@ -34,6 +34,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Install Docker CLI
+        shell: sh
+        run: |
+          apt-get update
+          apt-get install --yes docker.io
+          docker version
+
       - name: Log in to Gitea Container Registry
         uses: docker/login-action@v3
         with:
