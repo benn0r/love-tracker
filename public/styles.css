@@ -163,6 +163,43 @@ input[type="text"], input[type="number"] {
 input:focus { border-color: rgba(201,72,97,.55); box-shadow: 0 0 0 4px rgba(201,72,97,.08); }
 .input-wrap span { position: absolute; right: 1.2rem; color: var(--rose); font-size: 1.4rem; }
 
+.location-option {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: .7rem;
+  align-items: start;
+  margin: .25rem 0 1.1rem;
+  padding: .85rem;
+  border: 1px solid var(--line);
+  border-radius: .9rem;
+  color: var(--muted);
+  background: rgba(255,255,255,.42);
+  font-size: .76rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.45;
+  text-align: left;
+  text-transform: none;
+  cursor: pointer;
+}
+.location-option input { position: absolute; opacity: 0; pointer-events: none; }
+.location-option .checkmark {
+  position: static;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(201,72,97,.3);
+  border-radius: 7px;
+  color: transparent;
+  background: white;
+  font-size: .75rem;
+  transition: .2s ease;
+}
+.location-option input:checked + .checkmark { color: white; border-color: var(--rose); background: var(--rose); }
+.location-option input:focus-visible + .checkmark { box-shadow: 0 0 0 4px rgba(201,72,97,.12); }
+.location-option strong { display: block; margin-bottom: .05rem; color: var(--ink); font-weight: 600; }
+
 button {
   width: 100%;
   border: 0;
@@ -220,6 +257,41 @@ button span { margin-left: .45rem; }
 .progress-track { height: 10px; margin: 0 auto 1.5rem; overflow: hidden; border-radius: 99px; background: #f0dedd; }
 #progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #dc8790, var(--rose)); box-shadow: 0 0 14px rgba(201,72,97,.5); }
 .result-message { color: var(--muted); font-family: Georgia, serif; font-style: italic; }
+.love-map {
+  margin: 1.8rem 0 .6rem;
+  padding: 1.1rem 1.1rem .9rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(255,255,255,.72), rgba(247,223,224,.34));
+}
+.map-kicker { margin: 0; color: var(--rose); font-size: .65rem; font-weight: 600; letter-spacing: .17em; text-transform: uppercase; }
+.love-map svg { display: block; width: 100%; margin: -.2rem 0 -.6rem; overflow: visible; }
+.map-grid path { fill: none; stroke: rgba(135,107,112,.1); stroke-width: 1; stroke-dasharray: 2 7; }
+.route-shadow { fill: none; stroke: rgba(201,72,97,.1); stroke-width: 13; stroke-linecap: round; }
+.love-route {
+  fill: none;
+  stroke: url("#route-gradient");
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 6 11;
+  filter: url("#route-glow");
+  opacity: .8;
+}
+.map-point circle { fill: var(--rose); stroke: #fff8f6; stroke-width: 5; }
+.map-point .pulse { fill: none; stroke: var(--rose); stroke-width: 2; opacity: 0; }
+.map-point text { fill: var(--ink); font: 600 13px "DM Sans", sans-serif; text-anchor: middle; }
+.travelling-heart { opacity: 0; }
+.travelling-heart path { fill: var(--rose); filter: url("#route-glow"); }
+.map-animate .love-route { animation: route-dash 1.5s linear infinite; }
+.map-animate .travelling-heart {
+  opacity: 1;
+  offset-path: path("M92 174 C190 28 365 28 468 174");
+  offset-rotate: 0deg;
+  animation: love-travel 3.4s cubic-bezier(.45,.05,.55,.95) infinite;
+}
+.map-animate .destination .pulse { animation: map-pulse 2s 1.6s ease-out infinite; }
+.map-caption { margin: 0; color: var(--muted); font-family: Georgia, serif; font-size: .82rem; font-style: italic; }
 .quiet-button { width: auto; margin-top: 1rem; padding: .7rem 1.2rem; color: var(--rose); background: transparent; box-shadow: none; border: 1px solid var(--blush); }
 .quiet-button:hover { box-shadow: none; }
 
@@ -248,6 +320,15 @@ button span { margin-left: .45rem; }
 @keyframes heartbeat { 10%, 30% { transform: scale(1.18); } 20%, 40% { transform: scale(1); } }
 @keyframes dot { 50% { transform: translateY(-5px); opacity: .4; } }
 @keyframes float-hearts { to { transform: translateY(-110vh) rotate(12deg); opacity: 0; } }
+@keyframes route-dash { to { stroke-dashoffset: -34; } }
+@keyframes love-travel {
+  0% { offset-distance: 0%; transform: scale(.7); opacity: 0; }
+  10% { opacity: 1; }
+  48% { transform: scale(1.25); }
+  90% { opacity: 1; }
+  100% { offset-distance: 100%; transform: scale(.7); opacity: 0; }
+}
+@keyframes map-pulse { 0% { transform: scale(1); opacity: .65; } 100% { transform: scale(2.8); opacity: 0; } }
 
 @media (max-width: 560px) {
   .shell { width: min(100% - 1rem, 700px); padding: 4.5rem 0 1rem; }

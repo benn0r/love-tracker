@@ -44,7 +44,10 @@ test("creates and answers a love request", async () => {
   const createResponse = await fetch(`http://localhost:${port}/api/requests`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: "Nayane" }),
+    body: JSON.stringify({
+      name: "Nayane",
+      location: { latitude: 47.3769, longitude: 8.5417 },
+    }),
   });
   assert.equal(createResponse.status, 201);
   const created = await createResponse.json();
@@ -66,6 +69,7 @@ test("creates and answers a love request", async () => {
     name: "Nayane",
     status: "answered",
     value: 875,
+    location: { latitude: 47.38, longitude: 8.54 },
   });
 });
 

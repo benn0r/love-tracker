@@ -10,14 +10,21 @@ askForm.addEventListener("submit", async (event) => {
   askError.textContent = "";
   const button = askForm.querySelector("button");
   const name = new FormData(askForm).get("name").trim();
+  const wantsLocation = document.querySelector("#share-location").checked;
   button.disabled = true;
   button.firstChild.textContent = "Sending… ";
 
   try {
+    let location = null;
+    if (wantsLocation) {
+      button.firstChild.textContent = "Finding your place… ";
+      location = await getApproximateLocation();
+      button.firstChild.textContent = "Sending… ";
+    }
     const response = await fetch("/api/requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, location }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
@@ -40,7 +47,7 @@ async function poll(id, name) {
   try {
     const response = await fetch(`/api/requests/${id}`);
     const data = await response.json();
-    if (data.status === "answered") return showResult(name, data.value);
+    if (data.status === "answered") return showResult(name, data.value, data.location);
     if (!response.ok) throw new Error(data.error);
   } catch (error) {
     console.error(error);
@@ -48,12 +55,13 @@ async function poll(id, name) {
   pollTimer = setTimeout(() => poll(id, name), 1800);
 }
 
-function showResult(name, value) {
+function showResult(name, value, location) {
   clearTimeout(pollTimer);
   waitingView.classList.add("hidden");
   resultView.classList.remove("hidden");
   document.querySelector("#result-name").textContent = name;
   document.querySelector("#result-message").textContent = pickResultMessage(value);
+  if (location) showLoveMap(name, location);
 
   const duration = 2200;
   const started = performance.now();
@@ -73,6 +81,33 @@ function showResult(name, value) {
     if (progress < 1) requestAnimationFrame(animate);
   }
   requestAnimationFrame(animate);
+}
+
+function getApproximateLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => resolve({
+        latitude: Math.round(coords.latitude * 100) / 100,
+        longitude: Math.round(coords.longitude * 100) / 100,
+      }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+    );
+  });
+}
+
+function showLoveMap(name, location) {
+  const map = document.querySelector("#love-map");
+  const destination = document.querySelector("#map-destination-name");
+  const mapTitle = document.querySelector("#love-map-title");
+  const latDirection = location.latitude >= 47.39 ? "north" : "south";
+  const lonDirection = location.longitude >= 8.18 ? "east" : "west";
+
+  destination.textContent = name;
+  mapTitle.textContent = `Love travelling from Lenzburg ${latDirection}-${lonDirection} to ${name}`;
+  map.classList.remove("hidden");
+  requestAnimationFrame(() => map.classList.add("map-animate"));
 }
 
 function pickResultMessage(value) {

@@ -119,11 +119,30 @@ async function createRequest(req, res) {
   if (!name || name.length > MAX_NAME_LENGTH) {
     return sendJson(res, 400, { error: "Please enter a name of up to 60 characters." });
   }
+  let location = null;
+  if (body.location !== undefined && body.location !== null) {
+    const latitude = Number(body.location.latitude);
+    const longitude = Number(body.location.longitude);
+    if (
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180
+    ) {
+      location = {
+        latitude: Math.round(latitude * 100) / 100,
+        longitude: Math.round(longitude * 100) / 100,
+      };
+    }
+  }
 
   const request = {
     id: randomUUID(),
     token: randomBytes(24).toString("base64url"),
     name,
+    location,
     value: null,
     createdAt: new Date().toISOString(),
     answeredAt: null,
@@ -150,6 +169,7 @@ function getRequest(res, id) {
     name: request.name,
     status: request.value === null ? "waiting" : "answered",
     value: request.value,
+    location: request.location || null,
   });
 }
 

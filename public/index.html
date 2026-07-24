@@ -35,6 +35,14 @@
               <input id="name" name="name" type="text" maxlength="60" autocomplete="name" placeholder="e.g. Nayane" required />
               <span aria-hidden="true">♡</span>
             </div>
+            <label class="location-option" for="share-location">
+              <input id="share-location" name="share-location" type="checkbox" />
+              <span class="checkmark" aria-hidden="true">✓</span>
+              <span>
+                <strong>Show our love journey</strong>
+                Share my approximate location for an animated map
+              </span>
+            </label>
             <button type="submit">Send my love note <span>→</span></button>
             <p class="form-error" id="ask-error" role="alert"></p>
           </form>
@@ -56,6 +64,41 @@
             <div id="progress-fill"></div>
           </div>
           <p id="result-message" class="result-message"></p>
+          <section id="love-map" class="love-map hidden" aria-label="Love journey from Lenzburg">
+            <p class="map-kicker">Your love journey</p>
+            <svg viewBox="0 0 560 230" role="img" aria-labelledby="love-map-title">
+              <title id="love-map-title">Love travelling from Lenzburg</title>
+              <defs>
+                <linearGradient id="route-gradient" x1="0" x2="1">
+                  <stop offset="0" stop-color="#e2a1a8" />
+                  <stop offset="1" stop-color="#bd3955" />
+                </linearGradient>
+                <filter id="route-glow" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              <g class="map-grid" aria-hidden="true">
+                <path d="M30 55H530M30 115H530M30 175H530M120 25V205M280 25V205M440 25V205" />
+              </g>
+              <path class="route-shadow" d="M92 174 C190 28 365 28 468 174" />
+              <path id="love-route" class="love-route" d="M92 174 C190 28 365 28 468 174" />
+              <g class="map-point origin" transform="translate(92 174)">
+                <circle r="11" />
+                <circle class="pulse" r="11" />
+                <text x="0" y="32">Lenzburg</text>
+              </g>
+              <g class="travelling-heart" aria-hidden="true">
+                <path d="M0 8S-12 1-12-7c0-7 9-9 12-3 3-6 12-4 12 3C12 1 0 8 0 8Z" />
+              </g>
+              <g class="map-point destination" transform="translate(468 174)">
+                <circle r="11" />
+                <circle class="pulse" r="11" />
+                <text id="map-destination-name" x="0" y="32">You</text>
+              </g>
+            </svg>
+            <p class="map-caption">From my heart in Lenzburg to yours.</p>
+          </section>
           <button class="quiet-button" id="again-button" type="button">Ask again</button>
         </div>
       </section>
