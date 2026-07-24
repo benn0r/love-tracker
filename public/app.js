@@ -47,7 +47,7 @@ async function poll(id, name) {
   try {
     const response = await fetch(`/api/requests/${id}`);
     const data = await response.json();
-    if (data.status === "answered") return showResult(name, data.value, data.location);
+    if (data.status === "answered") return showResult(name, data.value, data.journey);
     if (!response.ok) throw new Error(data.error);
   } catch (error) {
     console.error(error);
@@ -55,13 +55,13 @@ async function poll(id, name) {
   pollTimer = setTimeout(() => poll(id, name), 1800);
 }
 
-function showResult(name, value, location) {
+function showResult(name, value, journey) {
   clearTimeout(pollTimer);
   waitingView.classList.add("hidden");
   resultView.classList.remove("hidden");
   document.querySelector("#result-name").textContent = name;
   document.querySelector("#result-message").textContent = pickResultMessage(value);
-  if (location) showLoveMap(name, location);
+  if (journey) showLoveMap(name, journey);
 
   const duration = 2200;
   const started = performance.now();
@@ -97,15 +97,15 @@ function getApproximateLocation() {
   });
 }
 
-function showLoveMap(name, location) {
+function showLoveMap(name, journey) {
   const map = document.querySelector("#love-map");
   const destination = document.querySelector("#map-destination-name");
   const mapTitle = document.querySelector("#love-map-title");
-  const latDirection = location.latitude >= 47.39 ? "north" : "south";
-  const lonDirection = location.longitude >= 8.18 ? "east" : "west";
+  const latDirection = journey.to.latitude >= journey.from.latitude ? "north" : "south";
+  const lonDirection = journey.to.longitude >= journey.from.longitude ? "east" : "west";
 
   destination.textContent = name;
-  mapTitle.textContent = `Love travelling from Lenzburg ${latDirection}-${lonDirection} to ${name}`;
+  mapTitle.textContent = `Love travelling ${latDirection}-${lonDirection} from his heart to ${name}`;
   map.classList.remove("hidden");
   requestAnimationFrame(() => map.classList.add("map-animate"));
 }

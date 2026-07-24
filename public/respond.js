@@ -37,10 +37,13 @@ form.addEventListener("submit", async (event) => {
   const button = form.querySelector("button");
   button.disabled = true;
   try {
+    button.firstChild.textContent = "Finding your place… ";
+    const location = await getApproximateLocation();
+    button.firstChild.textContent = "Sending my answer… ";
     const response = await fetch(`/api/respond/${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value: Number(valueInput.value) }),
+      body: JSON.stringify({ value: Number(valueInput.value), location }),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
@@ -48,8 +51,23 @@ form.addEventListener("submit", async (event) => {
   } catch (error) {
     errorElement.textContent = error.message || "Couldn’t send your answer.";
     button.disabled = false;
+    button.firstChild.textContent = "Send my answer ";
   }
 });
+
+function getApproximateLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => resolve({
+        latitude: Math.round(coords.latitude * 100) / 100,
+        longitude: Math.round(coords.longitude * 100) / 100,
+      }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+    );
+  });
+}
 
 function showSent() {
   formView.classList.add("hidden");

@@ -59,7 +59,10 @@ test("creates and answers a love request", async () => {
   const answerResponse = await fetch(`http://localhost:${port}/api/respond/${token}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ value: 875 }),
+    body: JSON.stringify({
+      value: 875,
+      location: { latitude: 47.3885, longitude: 8.175 },
+    }),
   });
   assert.equal(answerResponse.status, 200);
 
@@ -69,7 +72,10 @@ test("creates and answers a love request", async () => {
     name: "Nayane",
     status: "answered",
     value: 875,
-    location: { latitude: 47.38, longitude: 8.54 },
+    journey: {
+      from: { latitude: 47.39, longitude: 8.18 },
+      to: { latitude: 47.38, longitude: 8.54 },
+    },
   });
 });
 
