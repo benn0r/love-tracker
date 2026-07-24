@@ -60,6 +60,16 @@ test("HTML embeds the deployment version in its footer and asset URLs", async ()
   assert.doesNotMatch(html, /__LOVE_NAME__/);
 });
 
+test("private answer HTML carries the same deployment footer and fresh asset URLs", async () => {
+  const response = await fetch(`http://localhost:${port}/respond/example-token`);
+  const html = await response.text();
+  assert.match(html, /made with <span>♥<\/span> for Nayane &amp; Ben/);
+  assert.match(html, />vtest-bu<\/span>/);
+  assert.match(html, /\/respond\.js\?v=test-bu/);
+  assert.match(html, /\/styles\.css\?v=test-bu/);
+  assert.doesNotMatch(html, /__(APP_VERSION|LOVE_NAME)__/);
+});
+
 test("application scripts are never stored so new reveal features load immediately", async () => {
   const response = await fetch(`http://localhost:${port}/app.js`);
   assert.equal(response.status, 200);
