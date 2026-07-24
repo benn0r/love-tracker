@@ -1,0 +1,16 @@
+services:
+  love-tracker:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      PUBLIC_URL: "${PUBLIC_URL:-http://localhost:3000}"
+      PUSHOVER_APP_TOKEN: "${PUSHOVER_APP_TOKEN:-}"
+      PUSHOVER_USER_KEY: "${PUSHOVER_USER_KEY:-}"
+      LOVE_NAME: "${LOVE_NAME:-Nayane}"
+    volumes:
+      - love-tracker-data:/data
+
+volumes:
+  love-tracker-data:

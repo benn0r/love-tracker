@@ -53,6 +53,19 @@ LOVE_NAME=Nayane
 The value is server-rendered and safely HTML-escaped; changing it requires a
 restart or redeployment.
 
+## Docker Compose
+
+Copy the included example and adjust `.env` before starting it:
+
+```sh
+cp compose.example.yml compose.yml
+cp .env.example .env
+docker compose up -d --build
+```
+
+The example publishes the app on `${PORT:-3000}`, builds the local Dockerfile,
+and stores requests and photos in the persistent `love-tracker-data` volume.
+
 ## Coolify deployment
 
 1. Create an **Application** from this Git repository.
