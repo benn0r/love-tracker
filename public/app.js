@@ -3,11 +3,14 @@ const waitingView = document.querySelector("#waiting-view");
 const resultView = document.querySelector("#result-view");
 const askForm = document.querySelector("#ask-form");
 const askError = document.querySelector("#ask-error");
-const { t, apply, resultMessages } = window.LoveI18n;
+const { t, apply, resultMessages, waitingPhrases } = window.LoveI18n;
 const loveName = document.body.dataset.loveName;
 apply({ loveName });
 const requestPathMatch = location.pathname.match(/^\/request\/([0-9a-f-]+)$/);
 let pollTimer;
+let phraseTimer;
+let phraseTransitionTimer;
+let phraseIndex = -1;
 
 if (requestPathMatch) {
   askView.classList.add("hidden");
@@ -52,7 +55,35 @@ function showWaiting(request) {
   askView.classList.add("hidden");
   waitingView.classList.remove("hidden");
   document.querySelector("#waiting-copy").textContent = t("waiting.copy", { name: request.name });
+  startWaitingPhrases();
   poll(request.id, request.name);
+}
+
+function startWaitingPhrases() {
+  stopWaitingPhrases();
+  const phrase = document.querySelector("#waiting-phrase");
+  if (!phrase || !waitingPhrases?.length) return;
+
+  const showNextPhrase = () => {
+    let nextIndex = Math.floor(Math.random() * waitingPhrases.length);
+    if (waitingPhrases.length > 1 && nextIndex === phraseIndex) {
+      nextIndex = (nextIndex + 1) % waitingPhrases.length;
+    }
+    phraseIndex = nextIndex;
+    phrase.classList.add("is-changing");
+    phraseTransitionTimer = setTimeout(() => {
+      phrase.textContent = waitingPhrases[phraseIndex];
+      phrase.classList.remove("is-changing");
+    }, 250);
+  };
+
+  showNextPhrase();
+  phraseTimer = setInterval(showNextPhrase, 4200);
+}
+
+function stopWaitingPhrases() {
+  clearInterval(phraseTimer);
+  clearTimeout(phraseTransitionTimer);
 }
 
 async function poll(id, name) {
@@ -89,6 +120,7 @@ async function restoreRequest(id) {
 
 function showExpiredRequest() {
   clearTimeout(pollTimer);
+  stopWaitingPhrases();
   waitingView.classList.add("hidden");
   resultView.classList.add("hidden");
   askView.classList.remove("hidden");
@@ -103,6 +135,7 @@ function showExpiredRequest() {
 
 function showResult(name, value, journey, photoUrl) {
   clearTimeout(pollTimer);
+  stopWaitingPhrases();
   waitingView.classList.add("hidden");
   resultView.classList.remove("hidden");
   document.querySelector("#result-title").innerHTML = t("result.title", { name: escapeHtml(name) });

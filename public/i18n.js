@@ -23,6 +23,16 @@
       "waiting.title": "Waiting for<br><em>an answer…</em>",
       "waiting.copy": "{name}, keep this page open. The answer will bloom right here.",
       "waiting.label": "Waiting",
+      waitingPhrases: [
+        "A little question is finding its way to a big heart.",
+        "Some answers need one more heartbeat.",
+        "Love is taking the scenic route.",
+        "Good things are worth a tiny wait.",
+        "The heart on the other side is thinking.",
+        "Your answer could arrive at any moment.",
+        "A few butterflies are carrying the message.",
+        "Keep this little window open for the magic.",
+      ],
       "result.eyebrow": "The answer came from the heart",
       "result.title": "<em>{name}</em>,<br>you are loved",
       "result.meter": "Love meter",
@@ -112,6 +122,16 @@
       "waiting.title": "Warten auf<br><em>eine Antwort…</em>",
       "waiting.copy": "{name}, lass diese Seite geöffnet. Die Antwort erblüht genau hier.",
       "waiting.label": "Warten",
+      waitingPhrases: [
+        "Eine kleine Frage findet gerade ihren Weg zu einem großen Herzen.",
+        "Manche Antworten brauchen noch einen Herzschlag.",
+        "Die Liebe nimmt heute den besonders schönen Weg.",
+        "Gute Dinge sind eine kleine Wartezeit wert.",
+        "Das Herz auf der anderen Seite denkt nach.",
+        "Deine Antwort könnte jeden Moment eintreffen.",
+        "Ein paar Schmetterlinge tragen die Nachricht.",
+        "Lass dieses kleine Fenster für die Magie geöffnet.",
+      ],
       "result.eyebrow": "Die Antwort kam von Herzen",
       "result.title": "<em>{name}</em>,<br>du wirst geliebt",
       "result.meter": "Liebesanzeige",
@@ -201,6 +221,16 @@
       "waiting.title": "Esperando<br><em>uma resposta…</em>",
       "waiting.copy": "{name}, mantenha esta página aberta. A resposta florescerá bem aqui.",
       "waiting.label": "Esperando",
+      waitingPhrases: [
+        "Uma pequena pergunta está chegando a um grande coração.",
+        "Algumas respostas precisam de mais uma batida.",
+        "O amor está escolhendo o caminho mais bonito.",
+        "Coisas boas valem uma pequena espera.",
+        "O coração do outro lado está pensando.",
+        "Sua resposta pode chegar a qualquer momento.",
+        "Algumas borboletas estão levando a mensagem.",
+        "Mantenha esta janelinha aberta para a magia.",
+      ],
       "result.eyebrow": "A resposta veio do coração",
       "result.title": "<em>{name}</em>,<br>você é amada",
       "result.meter": "Medidor de amor",
@@ -308,5 +338,11 @@
     document.querySelector('meta[name="description"]')?.setAttribute("content", t("meta.description", variables));
   }
 
-  window.LoveI18n = { locale, t, apply, resultMessages: catalog.resultMessages };
+  window.LoveI18n = {
+    locale,
+    t,
+    apply,
+    resultMessages: catalog.resultMessages,
+    waitingPhrases: catalog.waitingPhrases,
+  };
 })();

@@ -245,6 +245,18 @@ button span { margin-left: .45rem; }
 .waiting-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--rose); animation: dot 1.2s infinite; }
 .waiting-dots i:nth-child(2) { animation-delay: .15s; }
 .waiting-dots i:nth-child(3) { animation-delay: .3s; }
+.waiting-phrase {
+  min-height: 2.8em;
+  margin: -1rem auto 1rem;
+  color: var(--rose);
+  font-family: Georgia, serif;
+  font-size: .9rem;
+  font-style: italic;
+  line-height: 1.4;
+  opacity: 1;
+  transition: opacity .25s ease, transform .25s ease;
+}
+.waiting-phrase.is-changing { opacity: 0; transform: translateY(4px); }
 
 .love-number {
   margin: 1.7rem 0 .8rem;
@@ -465,4 +477,5 @@ button span { margin-left: .45rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+  .waiting-phrase { transition: none; }
 }
