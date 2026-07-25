@@ -6,7 +6,14 @@ const askError = document.querySelector("#ask-error");
 const { t, apply, resultMessages } = window.LoveI18n;
 const loveName = document.body.dataset.loveName;
 apply({ loveName });
+const requestPathMatch = location.pathname.match(/^\/request\/([0-9a-f-]+)$/);
 let pollTimer;
+
+if (requestPathMatch) {
+  askView.classList.add("hidden");
+  waitingView.classList.remove("hidden");
+  document.querySelector("#waiting-copy").textContent = t("request.restoring");
+}
 
 askForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -32,6 +39,7 @@ askForm.addEventListener("submit", async (event) => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
+    history.pushState({}, "", `/request/${data.id}`);
     showWaiting(data);
   } catch (error) {
     askError.textContent = error.message || t("ask.error");
@@ -51,14 +59,46 @@ async function poll(id, name) {
   try {
     const response = await fetch(`/api/requests/${id}`);
     const data = await response.json();
-    if (data.status === "answered") {
-      return showResult(name, data.value, data.journey, data.photoUrl);
+    if (!response.ok) {
+      if (response.status === 404) return showExpiredRequest();
+      throw new Error(data.error);
     }
-    if (!response.ok) throw new Error(data.error);
+    if (data.status === "answered") {
+      return showResult(data.name || name, data.value, data.journey, data.photoUrl);
+    }
   } catch (error) {
     console.error(error);
   }
   pollTimer = setTimeout(() => poll(id, name), 1800);
+}
+
+async function restoreRequest(id) {
+  try {
+    const response = await fetch(`/api/requests/${id}`, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) return showExpiredRequest();
+    if (data.status === "answered") {
+      return showResult(data.name, data.value, data.journey, data.photoUrl);
+    }
+    showWaiting(data);
+  } catch (error) {
+    console.error(error);
+    showExpiredRequest();
+  }
+}
+
+function showExpiredRequest() {
+  clearTimeout(pollTimer);
+  waitingView.classList.add("hidden");
+  resultView.classList.add("hidden");
+  askView.classList.remove("hidden");
+  askView.innerHTML = `
+    <p class="eyebrow">${t("request.expiredEyebrow")}</p>
+    <h1><em>${t("request.expiredTitle")}</em></h1>
+    <p class="intro">${t("request.expiredCopy")}</p>
+    <button type="button" id="new-request-button">${t("request.new")}</button>
+  `;
+  document.querySelector("#new-request-button").addEventListener("click", () => location.assign("/"));
 }
 
 function showResult(name, value, journey, photoUrl) {
@@ -436,4 +476,6 @@ function escapeHtml(value) {
   return node.innerHTML;
 }
 
-document.querySelector("#again-button").addEventListener("click", () => location.reload());
+document.querySelector("#again-button").addEventListener("click", () => location.assign("/"));
+
+if (requestPathMatch) restoreRequest(requestPathMatch[1]);

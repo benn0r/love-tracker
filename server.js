@@ -79,6 +79,7 @@ function redactRequestPath(rawUrl) {
     const pathname = new URL(rawUrl || "/", "http://localhost").pathname;
     return pathname
       .replace(/^\/respond\/[^/]+/, "/respond/[redacted]")
+      .replace(/^\/request\/[^/]+/, "/request/[redacted]")
       .replace(/^\/api\/respond\/[^/]+/, "/api/respond/[redacted]")
       .replace(/^\/api\/requests\/[^/]+/, "/api/requests/[redacted]");
   } catch {
@@ -520,6 +521,9 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "GET" && /^\/respond\/[A-Za-z0-9_-]+$/.test(pathname)) {
       return await serveFile(res, "/respond.html");
+    }
+    if (req.method === "GET" && /^\/request\/[0-9a-f-]+$/.test(pathname)) {
+      return await serveFile(res, "/index.html");
     }
     if (req.method === "GET") return await serveFile(res, pathname);
     sendJson(res, 404, { error: "Not found" });

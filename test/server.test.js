@@ -98,6 +98,10 @@ test("creates and answers a love request", async () => {
   assert.equal(createResponse.status, 201);
   const created = await createResponse.json();
 
+  const bookmarkResponse = await fetch(`http://localhost:${port}/request/${created.id}`);
+  assert.equal(bookmarkResponse.status, 200);
+  assert.match(await bookmarkResponse.text(), /id="waiting-view"/);
+
   await new Promise((resolve) => setTimeout(resolve, 25));
   const token = responseUrl.split("/").pop();
   assert.ok(token);
