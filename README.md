@@ -1,5 +1,8 @@
 # Love Tracker
 
+> [!IMPORTANT]
+> **This entire repository—including the application, design, tests, documentation, and deployment setup—was made with AI.**
+
 A small romantic web app for asking someone how much they are loved. Love Tracker
 sends a private Pushover link to the person answering; they can reply with a score
 from 0–1000%, optionally share their approximate location, and attach a photo. The
