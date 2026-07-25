@@ -42,18 +42,27 @@ jobs:
           docker version
 
       - name: Log in to Gitea Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: git.example.com
-          username: benn0r
-          password: ${{ secrets.REGISTRY_TOKEN }}
+        shell: sh
+        env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          REGISTRY_USERNAME: ${{ gitea.repository_owner }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: |
+          registry="${GITEA_SERVER_URL#https://}"
+          registry="${registry#http://}"
+          printf '%s' "${REGISTRY_TOKEN}" \
+            | docker login "${registry}" --username "${REGISTRY_USERNAME}" --password-stdin
 
       - name: Build and push image
         shell: sh
         env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          IMAGE_REPOSITORY: ${{ gitea.repository }}
           IMAGE_BRANCH: ${{ gitea.ref_name }}
         run: |
-          image="git.example.com/benn0r/love-tracker"
+          registry="${GITEA_SERVER_URL#https://}"
+          registry="${registry#http://}"
+          image="${registry}/${IMAGE_REPOSITORY}"
           branch_tag="$(printf '%s' "${IMAGE_BRANCH}" \
             | tr '[:upper:]' '[:lower:]' \
             | sed 's#[^a-z0-9_.-]#-#g')"
@@ -65,18 +74,21 @@ jobs:
         if: gitea.ref == 'refs/heads/main'
         shell: sh
         env:
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          PACKAGE_OWNER: ${{ gitea.repository_owner }}
+          PACKAGE_NAME: ${{ gitea.event.repository.name }}
           REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
           versions="$(curl --fail --silent --show-error \
             --header "Authorization: token ${REGISTRY_TOKEN}" \
-            "https://git.example.com/api/v1/packages/benn0r?type=container&q=love-tracker&limit=100")"
+            "${GITEA_SERVER_URL}/api/v1/packages/${PACKAGE_OWNER}?type=container&q=${PACKAGE_NAME}&limit=100")"
 
           printf '%s' "${versions}" \
-            | jq -r '.[] | select(.name == "love-tracker" and .version != "main") | .version' \
+            | jq -r '.[] | select(.name == env.PACKAGE_NAME and .version != "main") | .version' \
             | while IFS= read -r version; do
                 status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
                   --request DELETE \
                   --header "Authorization: token ${REGISTRY_TOKEN}" \
-                  "https://git.example.com/api/v1/packages/benn0r/container/love-tracker/${version}")"
+                  "${GITEA_SERVER_URL}/api/v1/packages/${PACKAGE_OWNER}/container/${PACKAGE_NAME}/${version}")"
                 [ "${status}" = "204" ] || [ "${status}" = "404" ]
               done

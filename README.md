@@ -87,7 +87,7 @@ The Gitea Actions workflow tests the app, builds its Docker image on pushes, and
 publishes it to:
 
 ```text
-git.example.com/benn0r/love-tracker
+<gitea-host>/<repository-owner>/love-tracker
 ```
 
 Every branch receives one mutable tag derived from its name. Registry tags cannot
@@ -98,7 +98,9 @@ is deleted or its pull request is merged. After a `main` build, obsolete Love
 Tracker package versions are removed, leaving only `main`. Add a repository
 Actions secret named `REGISTRY_TOKEN` containing a Gitea personal access token
 with package read/write permission. The workflow requests only `contents: read`
-and `packages: write`.
+and `packages: write`. The registry host, repository owner, and package name are
+derived from Gitea's workflow context, so no instance-specific values are stored
+in the repository.
 
 ## Privacy and lifecycle
 
