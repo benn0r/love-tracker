@@ -30,8 +30,8 @@ jobs:
           tar \
             --exclude=.git \
             --exclude=data \
-            --exclude=build-context.tar.gz \
-            -czf build-context.tar.gz .
+            -czf /tmp/build-context.tar.gz .
+          mv /tmp/build-context.tar.gz build-context.tar.gz
 
       - name: Upload build context
         uses: actions/upload-artifact@v3
