@@ -1,77 +1,188 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import { test, expect } from "@playwright/test";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const dataDir = await mkdtemp(join(tmpdir(), "love-tracker-e2e-"));
+let app;
+let appPort;
+let baseUrl;
+let dataDir;
+let mockPushover;
+let serverError = "";
 const notifications = [];
 const notificationWaiters = [];
 
-const mockPushover = createServer(async (req, res) => {
-  let body = "";
-  for await (const chunk of req) body += chunk;
-  const notification = Object.fromEntries(new URLSearchParams(body));
-      const waiter = notificationWaiters.shift();
-      if (waiter) {
-        waiter(notification);
-      } else {
-        notifications.push(notification);
-      }
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ status: 1, request: "mock-request" }));
-});
+test.describe.configure({ mode: "serial" });
 
-await new Promise((resolve) => mockPushover.listen(0, "127.0.0.1", resolve));
-const mockPort = mockPushover.address().port;
-
-const portProbe = createServer();
-await new Promise((resolve) => portProbe.listen(0, "127.0.0.1", resolve));
-const appPort = portProbe.address().port;
-await new Promise((resolve) => portProbe.close(resolve));
-
-let serverError = "";
-const app = spawn(process.execPath, ["server.js"], {
-  env: {
-    ...process.env,
-    PORT: String(appPort),
-    DATA_DIR: dataDir,
-    NODE_ENV: "production",
-    PUBLIC_URL: `http://127.0.0.1:${appPort}`,
-    PUSHOVER_APP_TOKEN: "mock-app-token",
-    PUSHOVER_USER_KEY: "mock-user-key",
-    PUSHOVER_API_URL: `http://127.0.0.1:${mockPort}/messages`,
-    IP_GEOLOCATION_ENABLED: "false",
-  },
-  stdio: ["ignore", "pipe", "pipe"],
-});
-app.stderr.on("data", (chunk) => {
-  serverError += chunk.toString();
-});
-
-await new Promise((resolve, reject) => {
-  const timeout = setTimeout(() => reject(new Error(`E2E app did not start: ${serverError}`)), 5000);
-  app.stdout.on("data", (chunk) => {
-    if (chunk.toString().includes("listening")) {
-      clearTimeout(timeout);
-      resolve();
-    }
+test.beforeAll(async () => {
+  dataDir = await mkdtemp(join(tmpdir(), "love-tracker-e2e-"));
+  mockPushover = createServer(async (req, res) => {
+    let body = "";
+    for await (const chunk of req) body += chunk;
+    const notification = Object.fromEntries(new URLSearchParams(body));
+    const waiter = notificationWaiters.shift();
+    if (waiter) waiter(notification);
+    else notifications.push(notification);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: 1, request: "mock-request" }));
   });
-  app.once("exit", (code) => reject(new Error(`E2E app exited with ${code}: ${serverError}`)));
+
+  await listen(mockPushover);
+  const mockPort = mockPushover.address().port;
+  appPort = await availablePort();
+  baseUrl = `http://127.0.0.1:${appPort}`;
+
+  app = spawn(process.execPath, ["server.js"], {
+    env: {
+      ...process.env,
+      PORT: String(appPort),
+      DATA_DIR: dataDir,
+      NODE_ENV: "production",
+      PUBLIC_URL: baseUrl,
+      PUSHOVER_APP_TOKEN: "mock-app-token",
+      PUSHOVER_USER_KEY: "mock-user-key",
+      PUSHOVER_API_URL: `http://127.0.0.1:${mockPort}/messages`,
+      IP_GEOLOCATION_ENABLED: "false",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  app.stderr.on("data", (chunk) => { serverError += chunk.toString(); });
+  await waitForApp();
 });
 
-test.after(async () => {
-  app.kill();
-  await new Promise((resolve) => mockPushover.close(resolve));
-  await rm(dataDir, { recursive: true, force: true });
+test.afterAll(async () => {
+  if (app && !app.killed) {
+    app.kill();
+    await Promise.race([
+      new Promise((resolve) => app.once("exit", resolve)),
+      new Promise((resolve) => setTimeout(resolve, 1000)),
+    ]);
+  }
+  if (mockPushover?.listening) {
+    await new Promise((resolve) => mockPushover.close(resolve));
+  }
+  if (dataDir) await rm(dataDir, { recursive: true, force: true });
 });
+
+test("complete browser journey with shared locations", async ({ browser }, testInfo) => {
+  const requesterLocation = { latitude: 47.3769, longitude: 8.5417 };
+  const responderLocation = { latitude: 47.3885, longitude: 8.175 };
+  const requester = await browser.newContext({
+    baseURL: baseUrl,
+    locale: "en-US",
+    geolocation: requesterLocation,
+    permissions: ["geolocation"],
+  });
+  const responder = await browser.newContext({
+    baseURL: baseUrl,
+    locale: "en-US",
+    geolocation: responderLocation,
+    permissions: ["geolocation"],
+  });
+
+  try {
+    const page = await requester.newPage();
+    await page.goto("/");
+    await page.locator("#name").fill("Ada");
+    await page.locator('label[for="share-location"]').click();
+    await expect(page.locator("#share-location")).toBeChecked();
+    const notificationPromise = nextNotification();
+    await page.locator('#ask-form button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/request\/[0-9a-f-]+$/);
+    await expect(page.locator("#waiting-view")).toBeVisible();
+    await attachScreenshot(page, testInfo, "with-location-waiting");
+
+    const notification = await notificationPromise;
+    assertNotification(notification, "Ada");
+    const answerPage = await responder.newPage();
+    await answerPage.goto(notification.url);
+    await expect(answerPage.locator("#response-form-view")).toBeVisible();
+    await expect(answerPage.locator("#request-location-map")).toBeVisible();
+    await answerPage.locator("#value").fill("875");
+    await attachScreenshot(answerPage, testInfo, "with-location-answer");
+    await answerPage.locator('#response-form button[type="submit"]').click();
+    await expect(answerPage.locator("#sent-view")).toBeVisible();
+
+    await expect(page.locator("#result-view")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("#result-number")).toHaveText("875", { timeout: 6_000 });
+    await expect(page.locator("#love-map")).toBeVisible();
+    await expect(page.locator(".progress-track")).toHaveAttribute("aria-valuenow", "100");
+    await attachScreenshot(page, testInfo, "with-location-result");
+
+    const requestId = new URL(page.url()).pathname.split("/").pop();
+    const result = await (await requester.request.get(`/api/requests/${requestId}`)).json();
+    expect(result.journey).toEqual({
+      from: { latitude: 47.39, longitude: 8.18 },
+      to: { latitude: 47.38, longitude: 8.54 },
+    });
+  } finally {
+    await requester.close().catch(() => {});
+    await responder.close().catch(() => {});
+  }
+});
+
+test("complete browser journey without locations", async ({ browser }, testInfo) => {
+  const requester = await browser.newContext({ baseURL: baseUrl, locale: "en-US" });
+  const responder = await browser.newContext({ baseURL: baseUrl, locale: "en-US" });
+
+  try {
+    const page = await requester.newPage();
+    await page.goto("/");
+    await page.locator("#name").fill("Grace");
+    await expect(page.locator("#share-location")).not.toBeChecked();
+    const notificationPromise = nextNotification();
+    await page.locator('#ask-form button[type="submit"]').click();
+    await expect(page.locator("#waiting-view")).toBeVisible();
+    await attachScreenshot(page, testInfo, "without-location-waiting");
+
+    const notification = await notificationPromise;
+    assertNotification(notification, "Grace");
+    const answerPage = await responder.newPage();
+    await answerPage.goto(notification.url);
+    await expect(answerPage.locator("#response-form-view")).toBeVisible();
+    await expect(answerPage.locator("#request-location-map")).toBeHidden();
+    await answerPage.locator("#value").fill("100");
+    await attachScreenshot(answerPage, testInfo, "without-location-answer");
+    await answerPage.locator('#response-form button[type="submit"]').click();
+    await expect(answerPage.locator("#sent-view")).toBeVisible();
+
+    await expect(page.locator("#result-view")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("#result-number")).toHaveText("100", { timeout: 6_000 });
+    await expect(page.locator("#love-map")).toBeHidden();
+    await attachScreenshot(page, testInfo, "without-location-result");
+
+    const requestId = new URL(page.url()).pathname.split("/").pop();
+    const result = await (await requester.request.get(`/api/requests/${requestId}`)).json();
+    expect(result.journey).toBeNull();
+  } finally {
+    await requester.close().catch(() => {});
+    await responder.close().catch(() => {});
+  }
+});
+
+async function attachScreenshot(page, testInfo, name) {
+  const path = testInfo.outputPath(`${name}.png`);
+  await page.screenshot({ path, fullPage: true });
+  await testInfo.attach(name, { path, contentType: "image/png" });
+}
+
+function assertNotification(notification, name) {
+  expect(notification.token).toBe("mock-app-token");
+  expect(notification.user).toBe("mock-user-key");
+  expect(notification.priority).toBe("1");
+  expect(notification.url_title).toBe(`Answer ${name}`);
+  expect(notification.message).toMatch(new RegExp(`^${name} wants to know`));
+  const answerUrl = new URL(notification.url);
+  expect(answerUrl.origin).toBe(baseUrl);
+  expect(answerUrl.pathname).toMatch(/^\/respond\/[A-Za-z0-9_-]+$/);
+}
 
 function nextNotification() {
   if (notifications.length) return Promise.resolve(notifications.shift());
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("Mock notification was not received")), 3000);
+    const timeout = setTimeout(() => reject(new Error("Mock notification was not received")), 10_000);
     notificationWaiters.push((notification) => {
       clearTimeout(timeout);
       resolve(notification);
@@ -79,108 +190,29 @@ function nextNotification() {
   });
 }
 
-async function createRequest(name, location) {
-  const notificationPromise = nextNotification();
-  const response = await fetch(`http://127.0.0.1:${appPort}/api/requests`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, ...(location ? { location } : {}) }),
-  });
-  assert.equal(response.status, 201);
-  const request = await response.json();
-  const notification = await notificationPromise;
-
-  assert.equal(notification.token, "mock-app-token");
-  assert.equal(notification.user, "mock-user-key");
-  assert.equal(notification.priority, "1");
-  assert.equal(notification.url_title, `Answer ${name}`);
-  assert.match(notification.message, new RegExp(`^${name} wants to know`));
-
-  const answerUrl = new URL(notification.url);
-  assert.equal(answerUrl.origin, `http://127.0.0.1:${appPort}`);
-  assert.match(answerUrl.pathname, /^\/respond\/[A-Za-z0-9_-]+$/);
-  return { request, answerUrl };
+function listen(server) {
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 }
 
-test("complete notification flow with shared locations", async () => {
-  const requesterLocation = { latitude: 47.3769, longitude: 8.5417 };
-  const responderLocation = { latitude: 47.3885, longitude: 8.175 };
-  const { request, answerUrl } = await createRequest("Ada", requesterLocation);
+async function availablePort() {
+  const probe = createServer();
+  await listen(probe);
+  const port = probe.address().port;
+  await new Promise((resolve) => probe.close(resolve));
+  return port;
+}
 
-  const privateResponse = await fetch(
-    `http://127.0.0.1:${appPort}/api${answerUrl.pathname}`,
-  );
-  assert.equal(privateResponse.status, 200);
-  assert.deepEqual(await privateResponse.json(), {
-    name: "Ada",
-    answered: false,
-    value: null,
-    requesterLocation: { latitude: 47.38, longitude: 8.54 },
-    ipLocation: null,
+function waitForApp() {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(`E2E app did not start: ${serverError}`)), 5000);
+    app.stdout.on("data", (chunk) => {
+      if (!chunk.toString().includes("listening")) return;
+      clearTimeout(timeout);
+      resolve();
+    });
+    app.once("exit", (code) => {
+      clearTimeout(timeout);
+      reject(new Error(`E2E app exited with ${code}: ${serverError}`));
+    });
   });
-
-  const answerResponse = await fetch(
-    `http://127.0.0.1:${appPort}/api${answerUrl.pathname}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value: 875, location: responderLocation }),
-    },
-  );
-  assert.equal(answerResponse.status, 200);
-
-  const resultResponse = await fetch(
-    `http://127.0.0.1:${appPort}/api/requests/${request.id}`,
-  );
-  assert.equal(resultResponse.status, 200);
-  assert.deepEqual(await resultResponse.json(), {
-    id: request.id,
-    name: "Ada",
-    status: "answered",
-    value: 875,
-    journey: {
-      from: { latitude: 47.39, longitude: 8.18 },
-      to: { latitude: 47.38, longitude: 8.54 },
-    },
-    photoUrl: null,
-  });
-});
-
-test("complete notification flow without locations", async () => {
-  const { request, answerUrl } = await createRequest("Grace", null);
-
-  const privateResponse = await fetch(
-    `http://127.0.0.1:${appPort}/api${answerUrl.pathname}`,
-  );
-  assert.equal(privateResponse.status, 200);
-  assert.deepEqual(await privateResponse.json(), {
-    name: "Grace",
-    answered: false,
-    value: null,
-    requesterLocation: null,
-    ipLocation: null,
-  });
-
-  const answerResponse = await fetch(
-    `http://127.0.0.1:${appPort}/api${answerUrl.pathname}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ value: 100 }),
-    },
-  );
-  assert.equal(answerResponse.status, 200);
-
-  const resultResponse = await fetch(
-    `http://127.0.0.1:${appPort}/api/requests/${request.id}`,
-  );
-  assert.equal(resultResponse.status, 200);
-  assert.deepEqual(await resultResponse.json(), {
-    id: request.id,
-    name: "Grace",
-    status: "answered",
-    value: 100,
-    journey: null,
-    photoUrl: null,
-  });
-});
+}

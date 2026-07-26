@@ -1,4 +1,6 @@
 .env
 data/
+playwright-report/
+test-results/
 node_modules/
 .DS_Store

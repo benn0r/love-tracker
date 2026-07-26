@@ -72,7 +72,7 @@ jobs:
   test-e2e:
     needs: build
     runs-on: ubuntu-latest-slim
-    container: node:22.13.0-bookworm
+    container: mcr.microsoft.com/playwright:v1.62.0-noble
     timeout-minutes: 15
 
     steps:
@@ -86,16 +86,22 @@ jobs:
           mkdir source
           tar -xzf build-context.tar.gz -C source
 
+      - name: Install test dependencies
+        working-directory: source
+        run: npm ci
+
       - name: Run end-to-end tests
         working-directory: source
-        run: node --test --test-reporter=junit --test-reporter-destination=e2e-results.xml test/e2e.test.js
+        run: npm run test:e2e
 
       - name: Upload end-to-end test results
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: e2e-test-results
-          path: source/e2e-results.xml
+          path: |
+            source/test-results/
+            source/playwright-report/
           retention-days: 14
 
   publish-image:

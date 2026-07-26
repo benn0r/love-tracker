@@ -85,6 +85,19 @@ and stores requests and photos in the persistent `love-tracker-data` volume.
 
 The health check endpoint is `GET /health`.
 
+## Testing
+
+Run the unit tests with `npm run test:unit` and the Playwright browser journeys
+with `npm run test:e2e`. Install Chromium once before the first local E2E run:
+
+```bash
+npx playwright install chromium
+```
+
+The E2E suite drives the request and private answer pages with and without shared
+locations while using a local mock Pushover endpoint. CI retains its JUnit output,
+HTML report, screenshots, and failure traces/videos as workflow artifacts.
+
 ### Gitea Container Registry
 
 The Gitea Actions workflow tests the app, builds its Docker image on pushes, and
