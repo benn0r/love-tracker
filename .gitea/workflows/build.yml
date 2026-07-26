@@ -165,7 +165,7 @@ jobs:
             | tr '[:upper:]' '[:lower:]' \
             | sed 's#[^a-z0-9_.-]#-#g')"
 
-          docker build --tag "${image}:${branch_tag}" source
+          docker build --provenance=false --tag "${image}:${branch_tag}" source
           docker push "${image}:${branch_tag}"
 
       - name: Remove obsolete package versions
@@ -182,7 +182,11 @@ jobs:
             "${GITEA_SERVER_URL}/api/v1/packages/${PACKAGE_OWNER}?type=container&q=${PACKAGE_NAME}&limit=100")"
 
           printf '%s' "${versions}" \
-            | jq -r '.[] | select(.name == env.PACKAGE_NAME and .version != "main") | .version' \
+            | jq -r '.[] | select(
+                .name == env.PACKAGE_NAME
+                and .version != "main"
+                and (.version | startswith("sha256:") | not)
+              ) | .version' \
             | while IFS= read -r version; do
                 status="$(curl --silent --output /dev/null --write-out '%{http_code}' \
                   --request DELETE \
