@@ -70,7 +70,7 @@ jobs:
           retention-days: 14
 
   test-e2e:
-    needs: test
+    needs: build
     runs-on: ubuntu-latest-slim
     container: node:22.13.0-bookworm
     timeout-minutes: 15
@@ -80,12 +80,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-context
-
-      - name: Download unit test results
-        uses: actions/download-artifact@v3
-        with:
-          name: unit-test-results
-          path: test-evidence/unit
 
       - name: Extract build context
         run: |
@@ -101,14 +95,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: e2e-test-results
-          path: |
-            source/e2e-results.xml
-            test-evidence/unit/unit-results.xml
+          path: source/e2e-results.xml
           retention-days: 14
 
   publish-image:
     if: gitea.event_name == 'push' && startsWith(gitea.ref, 'refs/heads/')
-    needs: test-e2e
+    needs:
+      - test
+      - test-e2e
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -121,11 +115,17 @@ jobs:
         with:
           name: build-context
 
-      - name: Download test evidence
+      - name: Download unit test evidence
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-test-results
+          path: test-evidence/unit
+
+      - name: Download end-to-end test evidence
         uses: actions/download-artifact@v3
         with:
           name: e2e-test-results
-          path: test-evidence
+          path: test-evidence/e2e
 
       - name: Extract validated build context
         run: |
