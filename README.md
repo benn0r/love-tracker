@@ -45,6 +45,7 @@ the terminal. Open <http://localhost:3000>.
 | `PUBLIC_URL` | Production | Public base URL used in Pushover response links. |
 | `PUSHOVER_APP_TOKEN` | Production | Application token from Pushover. |
 | `PUSHOVER_USER_KEY` | Production | Pushover user or group key receiving response links. |
+| `PUSHOVER_API_URL` | No | Pushover-compatible API endpoint. Defaults to the official Pushover messages API; override it for testing. |
 | `DATA_DIR` | No | Persistent request/photo directory. Defaults to `./data` locally and `/data` in Docker. |
 | `PORT` | No | HTTP port. Defaults to `3000`. |
 | `APP_VERSION` / `SOURCE_COMMIT` | No | Deployment identifier embedded in HTML and asset URLs. Coolify can provide the commit automatically. |

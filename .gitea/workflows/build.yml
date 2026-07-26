@@ -10,20 +10,105 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest-slim
     container: node:22.13.0-bookworm
-    timeout-minutes: 15
+    timeout-minutes: 10
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Test
-        run: npm test
+      - name: Validate source
+        run: |
+          node --check server.js
+          node --check test/server.test.js
+          node --check test/e2e.test.js
+
+      - name: Package immutable build context
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=data \
+            --exclude=build-context.tar.gz \
+            -czf build-context.tar.gz .
+
+      - name: Upload build context
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-context
+          path: build-context.tar.gz
+          retention-days: 7
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest-slim
+    container: node:22.13.0-bookworm
+    timeout-minutes: 15
+
+    steps:
+      - name: Download build context
+        uses: actions/download-artifact@v3
+        with:
+          name: build-context
+
+      - name: Extract build context
+        run: |
+          mkdir source
+          tar -xzf build-context.tar.gz -C source
+
+      - name: Run unit tests
+        working-directory: source
+        run: node --test --test-reporter=junit --test-reporter-destination=unit-results.xml test/server.test.js
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-results
+          path: source/unit-results.xml
+          retention-days: 14
+
+  test-e2e:
+    needs: test
+    runs-on: ubuntu-latest-slim
+    container: node:22.13.0-bookworm
+    timeout-minutes: 15
+
+    steps:
+      - name: Download build context
+        uses: actions/download-artifact@v3
+        with:
+          name: build-context
+
+      - name: Download unit test results
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-test-results
+          path: test-evidence/unit
+
+      - name: Extract build context
+        run: |
+          mkdir source
+          tar -xzf build-context.tar.gz -C source
+
+      - name: Run end-to-end tests
+        working-directory: source
+        run: node --test --test-reporter=junit --test-reporter-destination=e2e-results.xml test/e2e.test.js
+
+      - name: Upload end-to-end test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-test-results
+          path: |
+            source/e2e-results.xml
+            test-evidence/unit/unit-results.xml
+          retention-days: 14
 
   publish-image:
     if: gitea.event_name == 'push' && startsWith(gitea.ref, 'refs/heads/')
+    needs: test-e2e
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -31,8 +116,21 @@ jobs:
       packages: write
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Download validated build context
+        uses: actions/download-artifact@v3
+        with:
+          name: build-context
+
+      - name: Download test evidence
+        uses: actions/download-artifact@v3
+        with:
+          name: e2e-test-results
+          path: test-evidence
+
+      - name: Extract validated build context
+        run: |
+          mkdir source
+          tar -xzf build-context.tar.gz -C source
 
       - name: Install Docker CLI
         shell: sh
@@ -67,7 +165,7 @@ jobs:
             | tr '[:upper:]' '[:lower:]' \
             | sed 's#[^a-z0-9_.-]#-#g')"
 
-          docker build --tag "${image}:${branch_tag}" .
+          docker build --tag "${image}:${branch_tag}" source
           docker push "${image}:${branch_tag}"
 
       - name: Remove obsolete package versions

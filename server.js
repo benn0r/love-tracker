@@ -276,6 +276,7 @@ async function getIpLocation(req) {
 async function sendPushover(name, responseUrl) {
   const token = process.env.PUSHOVER_APP_TOKEN;
   const user = process.env.PUSHOVER_USER_KEY;
+  const apiUrl = process.env.PUSHOVER_API_URL || "https://api.pushover.net/1/messages.json";
   if (!token || !user) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("Pushover credentials are not configured");
@@ -294,7 +295,7 @@ async function sendPushover(name, responseUrl) {
     priority: "1",
     sound: "magic",
   });
-  const response = await fetch("https://api.pushover.net/1/messages.json", {
+  const response = await fetch(apiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
