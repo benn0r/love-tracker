@@ -104,6 +104,8 @@ test("complete browser journey with shared locations", async ({ browser }, testI
   const requester = await browser.newContext({
     baseURL: baseUrl,
     locale: "en-US",
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
     geolocation: requesterLocation,
     permissions: ["geolocation"],
   });
@@ -128,6 +130,12 @@ test("complete browser journey with shared locations", async ({ browser }, testI
     await expect(page.locator("#enable-push")).toBeVisible();
     await page.locator("#enable-push").click();
     await expect(page.locator("#push-status")).toContainText("You’ll get a notification");
+    await expect(page.locator("#waiting-phrase")).not.toBeEmpty();
+    const pushStatusBox = await page.locator("#push-status").boundingBox();
+    const waitingPhraseBox = await page.locator("#waiting-phrase").boundingBox();
+    expect(pushStatusBox).not.toBeNull();
+    expect(waitingPhraseBox).not.toBeNull();
+    expect(waitingPhraseBox.y - (pushStatusBox.y + pushStatusBox.height)).toBeGreaterThanOrEqual(12);
     await attachScreenshot(page, testInfo, "with-location-waiting");
 
     const notification = await notificationPromise;

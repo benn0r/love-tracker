@@ -247,7 +247,7 @@ button span { margin-left: .45rem; }
 .waiting-dots i:nth-child(3) { animation-delay: .3s; }
 .waiting-phrase {
   min-height: 2.8em;
-  margin: -1rem auto 1rem;
+  margin: 1.25rem auto 1rem;
   color: var(--rose);
   font-family: Georgia, serif;
   font-size: .9rem;
@@ -256,9 +256,9 @@ button span { margin-left: .45rem; }
   opacity: 1;
   transition: opacity .25s ease, transform .25s ease;
 }
-.push-prompt { margin: 1rem 0 .35rem; }
+.push-prompt { max-width: 28rem; margin: 1rem auto 0; }
 .push-prompt button { padding: .8rem 1rem; font-size: .75rem; }
-.push-prompt p { min-height: 1.2em; margin: .55rem 0 0; color: var(--muted); font-size: .68rem; }
+.push-prompt p { min-height: 1.2em; margin: .65rem 0 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
 .waiting-phrase.is-changing { opacity: 0; transform: translateY(4px); }
 
 .love-number {
