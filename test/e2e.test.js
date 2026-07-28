@@ -158,6 +158,20 @@ test("complete browser journey with shared locations", async ({ browser }, testI
       from: { latitude: 48.86, longitude: 2.35 },
       to: { latitude: 51.51, longitude: -0.13 },
     });
+
+    await page.locator("#again-button").click();
+    await expect(page).toHaveURL(`${baseUrl}/`);
+    await expect(page.locator("#ask-view")).toBeVisible();
+    await expect(page.locator("#waiting-view")).toBeHidden();
+    await page.locator("#name").fill("Beatrice");
+    const secondNotificationPromise = nextNotification();
+    await page.locator('#ask-form button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/request\/[0-9a-f-]+$/);
+    await expect(page.locator("#waiting-view")).toBeVisible();
+    await expect(page.locator("#waiting-copy")).toContainText("Beatrice");
+    expect(new URL(page.url()).pathname).not.toBe(`/request/${requestId}`);
+    assertNotification(await secondNotificationPromise, "Beatrice");
+    await expect(page.locator("#ask-view")).toBeHidden();
   } finally {
     await requester.close().catch(() => {});
     await responder.close().catch(() => {});

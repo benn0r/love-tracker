@@ -6,6 +6,9 @@ const askError = document.querySelector("#ask-error");
 const { locale, t, apply, resultMessages, waitingPhrases } = window.LoveI18n;
 const loveName = document.body.dataset.loveName;
 apply({ loveName });
+if (location.pathname === "/" && new URL(location.href).searchParams.has("new")) {
+  history.replaceState({}, "", "/");
+}
 const requestPathMatch = location.pathname.match(/^\/request\/([0-9a-f-]+)$/);
 let pollTimer;
 let phraseTimer;
@@ -564,6 +567,14 @@ function escapeHtml(value) {
   return node.innerHTML;
 }
 
-document.querySelector("#again-button").addEventListener("click", () => location.assign("/"));
+function openFreshRequest() {
+  clearTimeout(pollTimer);
+  stopWaitingPhrases();
+  const freshUrl = new URL("/", location.origin);
+  freshUrl.searchParams.set("new", `${Date.now()}-${crypto.randomUUID?.() || Math.random()}`);
+  location.replace(freshUrl);
+}
+
+document.querySelector("#again-button").addEventListener("click", openFreshRequest);
 
 if (requestPathMatch) restoreRequest(requestPathMatch[1]);
