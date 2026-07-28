@@ -3,6 +3,7 @@
   "short_name": "Love",
   "description": "A little question from the heart.",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#fff8f6",
   "theme_color": "#fff8f6",

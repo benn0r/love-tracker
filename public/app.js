@@ -3,7 +3,7 @@ const waitingView = document.querySelector("#waiting-view");
 const resultView = document.querySelector("#result-view");
 const askForm = document.querySelector("#ask-form");
 const askError = document.querySelector("#ask-error");
-const { t, apply, resultMessages, waitingPhrases } = window.LoveI18n;
+const { locale, t, apply, resultMessages, waitingPhrases } = window.LoveI18n;
 const loveName = document.body.dataset.loveName;
 apply({ loveName });
 const requestPathMatch = location.pathname.match(/^\/request\/([0-9a-f-]+)$/);
@@ -11,6 +11,7 @@ let pollTimer;
 let phraseTimer;
 let phraseTransitionTimer;
 let phraseIndex = -1;
+let currentRequestId = requestPathMatch?.[1] || null;
 
 if (requestPathMatch) {
   askView.classList.add("hidden");
@@ -52,11 +53,64 @@ askForm.addEventListener("submit", async (event) => {
 });
 
 function showWaiting(request) {
+  currentRequestId = request.id;
   askView.classList.add("hidden");
   waitingView.classList.remove("hidden");
   document.querySelector("#waiting-copy").textContent = t("waiting.copy", { name: request.name });
   startWaitingPhrases();
+  preparePushPrompt(request.id);
   poll(request.id, request.name);
+}
+
+async function preparePushPrompt(id) {
+  const prompt = document.querySelector("#push-prompt");
+  const button = document.querySelector("#enable-push");
+  const status = document.querySelector("#push-status");
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+  try {
+    const config = await fetch("/api/push/config", { cache: "no-store" }).then((response) => response.json());
+    if (!config.enabled || !config.publicKey || id !== currentRequestId) return;
+    prompt.classList.remove("hidden");
+    button.onclick = () => enablePush(id, config.publicKey, button, status);
+    if (Notification.permission === "granted") {
+      status.textContent = t("push.ready");
+    }
+  } catch (error) {
+    console.error("Could not prepare notifications:", error);
+  }
+}
+
+async function enablePush(id, publicKey, button, status) {
+  button.disabled = true;
+  status.textContent = t("push.enabling");
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") throw new Error(t("push.denied"));
+    await navigator.serviceWorker.register("/sw.js");
+    const registration = await navigator.serviceWorker.ready;
+    const existing = await registration.pushManager.getSubscription();
+    const subscription = existing || await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+    const response = await fetch(`/api/requests/${id}/push-subscription`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscription: subscription.toJSON(), language: locale }),
+    });
+    if (!response.ok) throw new Error((await response.json()).error || t("push.error"));
+    button.classList.add("hidden");
+    status.textContent = t("push.enabled");
+  } catch (error) {
+    status.textContent = error.message || t("push.error");
+    button.disabled = false;
+  }
+}
+
+function urlBase64ToUint8Array(value) {
+  const padding = "=".repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
 }
 
 function startWaitingPhrases() {
@@ -138,6 +192,7 @@ function showResult(name, value, journey, photoUrl) {
   stopWaitingPhrases();
   waitingView.classList.add("hidden");
   resultView.classList.remove("hidden");
+  document.querySelector("#push-prompt").classList.add("hidden");
   document.querySelector("#result-title").innerHTML = t("result.title", { name: escapeHtml(name) });
   document.querySelector("#result-message").textContent = pickResultMessage(value);
   if (journey) showLoveMap(name, journey);

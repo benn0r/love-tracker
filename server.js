@@ -4,6 +4,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { isIP } from "node:net";
 import { fileURLToPath } from "node:url";
+import webpush from "web-push";
 
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const PUBLIC_DIR = join(ROOT, "public");
@@ -15,6 +16,10 @@ const APP_VERSION = String(process.env.APP_VERSION || process.env.SOURCE_COMMIT 
 const LOVE_NAME = String(process.env.LOVE_NAME || "Nayane").trim().slice(0, 60) || "Nayane";
 const IP_GEOLOCATION_ENABLED = process.env.IP_GEOLOCATION_ENABLED !== "false";
 const IP_GEOLOCATION_URL = process.env.IP_GEOLOCATION_URL || "https://ipwho.is/{ip}";
+const VAPID_PUBLIC_KEY = String(process.env.VAPID_PUBLIC_KEY || "").trim();
+const VAPID_PRIVATE_KEY = String(process.env.VAPID_PRIVATE_KEY || "").trim();
+const VAPID_SUBJECT = String(process.env.VAPID_SUBJECT || "mailto:notifications@example.com").trim();
+const WEB_PUSH_ENABLED = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
 const MAX_NAME_LENGTH = 60;
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -30,6 +35,10 @@ const contentTypes = {
 
 let requests = new Map();
 let saveQueue = Promise.resolve();
+
+if (WEB_PUSH_ENABLED) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+}
 
 async function loadRequests() {
   await mkdir(DATA_DIR, { recursive: true });
@@ -158,6 +167,45 @@ function normalizeLocation(value) {
     latitude: Math.round(latitude * 100) / 100,
     longitude: Math.round(longitude * 100) / 100,
   };
+}
+
+function normalizePushSubscription(value) {
+  if (!value || typeof value !== "object") return null;
+  const endpoint = String(value.endpoint || "");
+  const p256dh = String(value.keys?.p256dh || "");
+  const auth = String(value.keys?.auth || "");
+  if (
+    !/^https:\/\//.test(endpoint) ||
+    endpoint.length > 2000 ||
+    !p256dh || p256dh.length > 200 ||
+    !auth || auth.length > 100
+  ) return null;
+  return { endpoint, expirationTime: value.expirationTime || null, keys: { p256dh, auth } };
+}
+
+function pushCopy(language, name) {
+  if (language === "de") {
+    return { title: "Deine Liebesantwort ist da ♥", body: `${name}, öffne den Love Tracker und entdecke deine Antwort.` };
+  }
+  if (language === "pt-BR") {
+    return { title: "Sua resposta de amor chegou ♥", body: `${name}, abra o Love Tracker e descubra sua resposta.` };
+  }
+  return { title: "Your love answer is ready ♥", body: `${name}, open Love Tracker and discover your answer.` };
+}
+
+async function sendAnswerPush(request, subscription) {
+  if (!WEB_PUSH_ENABLED || !subscription) return;
+  const copy = pushCopy(request.pushLanguage, request.name);
+  try {
+    await webpush.sendNotification(subscription, JSON.stringify({
+      ...copy,
+      url: `/request/${request.id}`,
+      tag: `love-answer-${request.id}`,
+    }), { TTL: 24 * 60 * 60, urgency: "high", timeout: 10_000 });
+    console.log(`Answer notification delivered for request ${request.id}`);
+  } catch (error) {
+    console.warn(`Answer notification failed for request ${request.id}: ${error.statusCode || error.message}`);
+  }
 }
 
 function decodePhoto(dataUrl, requestId) {
@@ -330,6 +378,8 @@ async function createRequest(req, res) {
     value: null,
     createdAt: new Date().toISOString(),
     answeredAt: null,
+    pushSubscription: null,
+    pushLanguage: null,
   };
   const responseUrl = `${getBaseUrl(req)}/respond/${request.token}`;
 
@@ -343,6 +393,25 @@ async function createRequest(req, res) {
     console.error("Could not create love request:", error);
     sendJson(res, 502, { error: "I couldn’t send the love note. Please try again in a moment." });
   }
+}
+
+async function subscribeToRequest(req, res, id) {
+  if (!WEB_PUSH_ENABLED) return sendJson(res, 503, { error: "Notifications are not configured." });
+  const request = requests.get(id);
+  if (!request) return sendJson(res, 404, { error: "This love note has expired." });
+  if (request.value !== null) return sendJson(res, 409, { error: "This love note was already answered." });
+  let body;
+  try {
+    body = await readJson(req, 12_000);
+  } catch {
+    return sendJson(res, 400, { error: "That notification subscription could not be read." });
+  }
+  const subscription = normalizePushSubscription(body.subscription);
+  if (!subscription) return sendJson(res, 400, { error: "Invalid notification subscription." });
+  request.pushSubscription = subscription;
+  request.pushLanguage = ["en", "de", "pt-BR"].includes(body.language) ? body.language : "en";
+  await saveRequests();
+  sendJson(res, 201, { subscribed: true });
 }
 
 function getRequest(res, id) {
@@ -425,7 +494,10 @@ async function answerRequest(req, res, token) {
     request.photo = { filename: photo.filename, type: photo.type };
   }
   request.answeredAt = new Date().toISOString();
+  const pushSubscription = request.pushSubscription;
+  request.pushSubscription = null;
   await saveRequests();
+  await sendAnswerPush(request, pushSubscription);
   sendJson(res, 200, { ok: true, value });
 }
 
@@ -499,12 +571,19 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && pathname === "/api/version") {
       return sendJson(res, 200, { version: APP_VERSION });
     }
+    if (req.method === "GET" && pathname === "/api/push/config") {
+      return sendJson(res, 200, { enabled: WEB_PUSH_ENABLED, publicKey: WEB_PUSH_ENABLED ? VAPID_PUBLIC_KEY : null });
+    }
     if (req.method === "POST" && pathname === "/api/requests") {
       return await createRequest(req, res);
     }
 
     const requestMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)$/);
     if (req.method === "GET" && requestMatch) return getRequest(res, requestMatch[1]);
+    const subscriptionMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)\/push-subscription$/);
+    if (req.method === "POST" && subscriptionMatch) {
+      return await subscribeToRequest(req, res, subscriptionMatch[1]);
+    }
     const requestPhotoMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)\/photo$/);
     if (req.method === "GET" && requestPhotoMatch) {
       return await getRequestPhoto(res, requestPhotoMatch[1]);

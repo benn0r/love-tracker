@@ -54,6 +54,10 @@
           <h1 data-i18n-html="waiting.title">Waiting for<br /><em>an answer…</em></h1>
           <div class="orbit" aria-hidden="true"><span>♥</span></div>
           <p class="intro" id="waiting-copy"><strong id="waiting-name"></strong>, keep this page open. The answer will bloom right here.</p>
+          <div id="push-prompt" class="push-prompt hidden">
+            <button id="enable-push" class="quiet-button" type="button" data-i18n="push.enable">Notify me when the answer arrives</button>
+            <p id="push-status" aria-live="polite"></p>
+          </div>
           <p id="waiting-phrase" class="waiting-phrase" aria-live="polite"></p>
           <div class="waiting-dots" aria-label="Waiting" data-i18n-aria-label="waiting.label"><i></i><i></i><i></i></div>
         </div>

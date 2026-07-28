@@ -256,6 +256,9 @@ button span { margin-left: .45rem; }
   opacity: 1;
   transition: opacity .25s ease, transform .25s ease;
 }
+.push-prompt { margin: 1rem 0 .35rem; }
+.push-prompt button { padding: .8rem 1rem; font-size: .75rem; }
+.push-prompt p { min-height: 1.2em; margin: .55rem 0 0; color: var(--muted); font-size: .68rem; }
 .waiting-phrase.is-changing { opacity: 0; transform: translateY(4px); }
 
 .love-number {

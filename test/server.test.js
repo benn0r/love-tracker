@@ -48,6 +48,12 @@ test("version endpoint identifies the running deployment", async () => {
   assert.deepEqual(await response.json(), { version: "test-bu" });
 });
 
+test("push configuration is disabled when VAPID keys are absent", async () => {
+  const response = await fetch(`http://localhost:${port}/api/push/config`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { enabled: false, publicKey: null });
+});
+
 test("HTML embeds the deployment version in its footer and asset URLs", async () => {
   const response = await fetch(`http://localhost:${port}/`);
   const html = await response.text();
@@ -55,6 +61,7 @@ test("HTML embeds the deployment version in its footer and asset URLs", async ()
   assert.match(html, /\/app\.js\?v=test-bu/);
   assert.match(html, /\/i18n\.js\?v=test-bu/);
   assert.match(html, /id="waiting-phrase"/);
+  assert.match(html, /id="enable-push"/);
   assert.match(html, /\/styles\.css\?v=test-bu/);
   assert.match(html, /made with <span>♥<\/span> for Nayane &amp; Ben/);
   assert.match(html, /placeholder="e\.g\. Nayane &amp; Ben"/);
@@ -79,6 +86,13 @@ test("application scripts are never stored so new reveal features load immediate
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "no-store, no-cache, must-revalidate, max-age=0");
   assert.equal(response.headers.get("pragma"), "no-cache");
+});
+
+test("service worker is served fresh", async () => {
+  const response = await fetch(`http://localhost:${port}/sw.js`);
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /notificationclick/);
+  assert.equal(response.headers.get("cache-control"), "no-store, no-cache, must-revalidate, max-age=0");
 });
 
 test("creates and answers a love request", async () => {

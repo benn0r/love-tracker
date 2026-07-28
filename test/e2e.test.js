@@ -1,18 +1,25 @@
 import { test, expect } from "@playwright/test";
 import { spawn } from "node:child_process";
+import { createECDH, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
-import { mkdtemp, rm } from "node:fs/promises";
+import { createServer as createHttpsServer } from "node:https";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import webpush from "web-push";
 
 let app;
 let appPort;
 let baseUrl;
 let dataDir;
 let mockPushover;
+let mockWebPush;
+let pushEndpoint;
 let serverError = "";
 const notifications = [];
 const notificationWaiters = [];
+const pushDeliveries = [];
+const pushWaiters = [];
 
 test.describe.configure({ mode: "serial" });
 
@@ -31,6 +38,23 @@ test.beforeAll(async () => {
 
   await listen(mockPushover);
   const mockPort = mockPushover.address().port;
+  const [pushKey, pushCert] = await Promise.all([
+    readFile(new URL("./fixtures/web-push-key.pem", import.meta.url)),
+    readFile(new URL("./fixtures/web-push-cert.pem", import.meta.url)),
+  ]);
+  mockWebPush = createHttpsServer({ key: pushKey, cert: pushCert }, async (req, res) => {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    const delivery = { headers: req.headers, body: Buffer.concat(chunks) };
+    const waiter = pushWaiters.shift();
+    if (waiter) waiter(delivery);
+    else pushDeliveries.push(delivery);
+    res.writeHead(201);
+    res.end();
+  });
+  await listen(mockWebPush);
+  pushEndpoint = `https://localhost:${mockWebPush.address().port}/push`;
+  const vapidKeys = webpush.generateVAPIDKeys();
   appPort = await availablePort();
   baseUrl = `http://127.0.0.1:${appPort}`;
 
@@ -45,6 +69,11 @@ test.beforeAll(async () => {
       PUSHOVER_USER_KEY: "mock-user-key",
       PUSHOVER_API_URL: `http://127.0.0.1:${mockPort}/messages`,
       IP_GEOLOCATION_ENABLED: "false",
+      VAPID_PUBLIC_KEY: vapidKeys.publicKey,
+      VAPID_PRIVATE_KEY: vapidKeys.privateKey,
+      VAPID_SUBJECT: "mailto:tests@example.com",
+      NODE_TLS_REJECT_UNAUTHORIZED: "0",
+      LOVE_NAME: "Aurora",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -63,12 +92,15 @@ test.afterAll(async () => {
   if (mockPushover?.listening) {
     await new Promise((resolve) => mockPushover.close(resolve));
   }
+  if (mockWebPush?.listening) {
+    await new Promise((resolve) => mockWebPush.close(resolve));
+  }
   if (dataDir) await rm(dataDir, { recursive: true, force: true });
 });
 
 test("complete browser journey with shared locations", async ({ browser }, testInfo) => {
-  const requesterLocation = { latitude: 47.3769, longitude: 8.5417 };
-  const responderLocation = { latitude: 47.3885, longitude: 8.175 };
+  const requesterLocation = { latitude: 51.5072, longitude: -0.1276 };
+  const responderLocation = { latitude: 48.8566, longitude: 2.3522 };
   const requester = await browser.newContext({
     baseURL: baseUrl,
     locale: "en-US",
@@ -84,6 +116,7 @@ test("complete browser journey with shared locations", async ({ browser }, testI
 
   try {
     const page = await requester.newPage();
+    await installPushMock(page);
     await page.goto("/");
     await page.locator("#name").fill("Ada");
     await page.locator('label[for="share-location"]').click();
@@ -92,6 +125,9 @@ test("complete browser journey with shared locations", async ({ browser }, testI
     await page.locator('#ask-form button[type="submit"]').click();
     await expect(page).toHaveURL(/\/request\/[0-9a-f-]+$/);
     await expect(page.locator("#waiting-view")).toBeVisible();
+    await expect(page.locator("#enable-push")).toBeVisible();
+    await page.locator("#enable-push").click();
+    await expect(page.locator("#push-status")).toContainText("You’ll get a notification");
     await attachScreenshot(page, testInfo, "with-location-waiting");
 
     const notification = await notificationPromise;
@@ -102,8 +138,13 @@ test("complete browser journey with shared locations", async ({ browser }, testI
     await expect(answerPage.locator("#request-location-map")).toBeVisible();
     await answerPage.locator("#value").fill("875");
     await attachScreenshot(answerPage, testInfo, "with-location-answer");
+    const pushPromise = nextPushDelivery();
     await answerPage.locator('#response-form button[type="submit"]').click();
     await expect(answerPage.locator("#sent-view")).toBeVisible();
+    const delivery = await pushPromise;
+    expect(delivery.body.length).toBeGreaterThan(0);
+    expect(delivery.headers.authorization).toBeTruthy();
+    expect(delivery.headers.urgency).toBe("high");
 
     await expect(page.locator("#result-view")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator("#result-number")).toHaveText("875", { timeout: 6_000 });
@@ -114,8 +155,8 @@ test("complete browser journey with shared locations", async ({ browser }, testI
     const requestId = new URL(page.url()).pathname.split("/").pop();
     const result = await (await requester.request.get(`/api/requests/${requestId}`)).json();
     expect(result.journey).toEqual({
-      from: { latitude: 47.39, longitude: 8.18 },
-      to: { latitude: 47.38, longitude: 8.54 },
+      from: { latitude: 48.86, longitude: 2.35 },
+      to: { latitude: 51.51, longitude: -0.13 },
     });
   } finally {
     await requester.close().catch(() => {});
@@ -124,6 +165,7 @@ test("complete browser journey with shared locations", async ({ browser }, testI
 });
 
 test("complete browser journey without locations", async ({ browser }, testInfo) => {
+  const deliveriesBefore = pushDeliveries.length;
   const requester = await browser.newContext({ baseURL: baseUrl, locale: "en-US" });
   const responder = await browser.newContext({ baseURL: baseUrl, locale: "en-US" });
 
@@ -156,6 +198,7 @@ test("complete browser journey without locations", async ({ browser }, testInfo)
     const requestId = new URL(page.url()).pathname.split("/").pop();
     const result = await (await requester.request.get(`/api/requests/${requestId}`)).json();
     expect(result.journey).toBeNull();
+    expect(pushDeliveries.length).toBe(deliveriesBefore);
   } finally {
     await requester.close().catch(() => {});
     await responder.close().catch(() => {});
@@ -188,6 +231,48 @@ function nextNotification() {
       resolve(notification);
     });
   });
+}
+
+function nextPushDelivery() {
+  if (pushDeliveries.length) return Promise.resolve(pushDeliveries.shift());
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error("Web Push delivery was not received")), 10_000);
+    pushWaiters.push((delivery) => {
+      clearTimeout(timeout);
+      resolve(delivery);
+    });
+  });
+}
+
+async function installPushMock(page) {
+  const ecdh = createECDH("prime256v1");
+  ecdh.generateKeys();
+  const subscription = {
+    endpoint: pushEndpoint,
+    expirationTime: null,
+    keys: {
+      p256dh: ecdh.getPublicKey().toString("base64url"),
+      auth: randomBytes(16).toString("base64url"),
+    },
+  };
+  await page.addInitScript((mockSubscription) => {
+    class MockNotification {
+      static permission = "default";
+      static async requestPermission() { this.permission = "granted"; return "granted"; }
+    }
+    const registration = {
+      pushManager: {
+        getSubscription: async () => null,
+        subscribe: async () => ({ toJSON: () => mockSubscription }),
+      },
+    };
+    Object.defineProperty(window, "Notification", { configurable: true, value: MockNotification });
+    Object.defineProperty(window, "PushManager", { configurable: true, value: class PushManager {} });
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: { register: async () => registration, ready: Promise.resolve(registration) },
+    });
+  }, subscription);
 }
 
 function listen(server) {
