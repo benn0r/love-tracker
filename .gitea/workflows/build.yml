@@ -9,6 +9,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ gitea.workflow }}-${{ gitea.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest-slim
@@ -36,6 +40,10 @@ jobs:
           tar \
             --exclude=.git \
             --exclude=data \
+            --exclude=node_modules \
+            --exclude=playwright-report \
+            --exclude=test-results \
+            --exclude=build-context.tar.gz \
             -czf /tmp/build-context.tar.gz .
           mv /tmp/build-context.tar.gz build-context.tar.gz
 
@@ -103,6 +111,15 @@ jobs:
       - name: Install test dependencies
         working-directory: source
         run: npm ci
+
+      - name: Verify matching browser is installed
+        working-directory: source
+        run: |
+          node --input-type=module -e '
+            import { accessSync, constants } from "node:fs";
+            import { chromium } from "@playwright/test";
+            accessSync(chromium.executablePath(), constants.X_OK);
+          '
 
       - name: Run end-to-end tests
         working-directory: source

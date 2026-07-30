@@ -29,7 +29,11 @@ const VAPID_SUBJECT = String(
 ).trim();
 const WEB_PUSH_ENABLED = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
 const MAX_NAME_LENGTH = 60;
-const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const configuredRequestTtl = Number(process.env.REQUEST_TTL_MS);
+const REQUEST_TTL_MS =
+  Number.isFinite(configuredRequestTtl) && configuredRequestTtl > 0
+    ? configuredRequestTtl
+    : 7 * 24 * 60 * 60 * 1000;
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -43,6 +47,7 @@ const contentTypes = {
 
 let requests = new Map();
 let saveQueue = Promise.resolve();
+const answeringRequests = new Set();
 
 if (WEB_PUSH_ENABLED) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
@@ -58,29 +63,42 @@ async function loadRequests() {
     if (error.code !== "ENOENT")
       console.error("Could not load request data:", error);
   }
-  pruneExpired();
+  if (await pruneExpired()) await saveRequests();
 }
 
-function pruneExpired() {
+async function pruneExpired() {
   const cutoff = Date.now() - REQUEST_TTL_MS;
+  const photoDeletes = [];
+  let changed = false;
   for (const [id, item] of requests) {
-    if (new Date(item.createdAt).getTime() < cutoff) {
+    if (
+      new Date(item.createdAt).getTime() < cutoff &&
+      !answeringRequests.has(id)
+    ) {
       requests.delete(id);
+      changed = true;
       if (item.photo?.filename) {
-        unlink(join(PHOTO_DIR, item.photo.filename)).catch(() => {});
+        photoDeletes.push(
+          unlink(join(PHOTO_DIR, item.photo.filename)).catch(() => {}),
+        );
       }
     }
   }
+  await Promise.all(photoDeletes);
+  return changed;
 }
 
 function saveRequests() {
   const snapshot = JSON.stringify([...requests.values()], null, 2);
-  saveQueue = saveQueue.then(async () => {
-    const temporaryFile = `${DATA_FILE}.tmp`;
-    await writeFile(temporaryFile, snapshot);
-    await rename(temporaryFile, DATA_FILE);
-  });
-  return saveQueue;
+  const operation = saveQueue
+    .catch(() => {})
+    .then(async () => {
+      const temporaryFile = `${DATA_FILE}.tmp`;
+      await writeFile(temporaryFile, snapshot);
+      await rename(temporaryFile, DATA_FILE);
+    });
+  saveQueue = operation.catch(() => {});
+  return operation;
 }
 
 function sendJson(res, status, value) {
@@ -357,7 +375,14 @@ async function getIpLocation(req) {
     }
     const latitude = Number(data.latitude);
     const longitude = Number(data.longitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
       console.warn("IP location unavailable: provider returned no coordinates");
       return null;
     }
@@ -448,7 +473,7 @@ async function createRequest(req, res) {
   try {
     await sendPushover(name, responseUrl);
     requests.set(request.id, request);
-    pruneExpired();
+    await pruneExpired();
     await saveRequests();
     sendJson(res, 201, { id: request.id, name: request.name });
   } catch (error) {
@@ -556,31 +581,52 @@ async function answerRequest(req, res, token) {
   } catch {
     return sendJson(res, 400, { error: "That answer could not be read." });
   }
-  const value = Number(body.value);
-  if (!Number.isInteger(value) || value < 0 || value > 1000) {
+  const value = body.value;
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < 0 ||
+    value > 1000
+  ) {
     return sendJson(res, 400, {
       error: "Choose a whole number between 0 and 1000.",
     });
   }
 
-  request.value = value;
-  request.responderLocation = normalizeLocation(body.location);
+  let photo = null;
   if (body.photo) {
-    let photo;
     try {
       photo = decodePhoto(body.photo, request.id);
     } catch (error) {
       return sendJson(res, 400, { error: error.message });
     }
-    await writeFile(join(PHOTO_DIR, photo.filename), photo.bytes);
-    request.photo = { filename: photo.filename, type: photo.type };
   }
-  request.answeredAt = new Date().toISOString();
-  const pushSubscription = request.pushSubscription;
-  request.pushSubscription = null;
-  await saveRequests();
-  await sendAnswerPush(request, pushSubscription);
-  sendJson(res, 200, { ok: true, value });
+
+  if (request.value !== null || answeringRequests.has(request.id)) {
+    return sendJson(res, 409, {
+      error: "This love note was already answered.",
+    });
+  }
+
+  answeringRequests.add(request.id);
+  try {
+    if (photo) {
+      await writeFile(join(PHOTO_DIR, photo.filename), photo.bytes);
+    }
+    request.value = value;
+    request.responderLocation = normalizeLocation(body.location);
+    if (photo) {
+      request.photo = { filename: photo.filename, type: photo.type };
+    }
+    request.answeredAt = new Date().toISOString();
+    const pushSubscription = request.pushSubscription;
+    request.pushSubscription = null;
+    await saveRequests();
+    await sendAnswerPush(request, pushSubscription);
+    sendJson(res, 200, { ok: true, value });
+  } finally {
+    answeringRequests.delete(request.id);
+  }
 }
 
 async function uploadResponsePhoto(req, res, token) {
@@ -661,9 +707,17 @@ async function serveFile(res, pathname) {
 const server = http.createServer(async (req, res) => {
   logRequest(req, res);
   const url = new URL(req.url, "http://localhost");
-  const pathname = decodeURIComponent(url.pathname);
+  let pathname;
 
   try {
+    try {
+      pathname = decodeURIComponent(url.pathname);
+    } catch {
+      return sendJson(res, 400, { error: "Invalid request path." });
+    }
+    if (pathname.startsWith("/api/") && (await pruneExpired())) {
+      await saveRequests();
+    }
     if (req.method === "GET" && pathname === "/health") {
       return sendJson(res, 200, { status: "ok" });
     }
@@ -727,5 +781,7 @@ const server = http.createServer(async (req, res) => {
 
 await loadRequests();
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Love Tracker listening on port ${PORT}`);
+  const address = server.address();
+  const listeningPort = typeof address === "object" ? address.port : PORT;
+  console.log(`Love Tracker listening on port ${listeningPort}`);
 });

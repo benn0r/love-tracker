@@ -186,15 +186,16 @@ async function poll(id, name) {
 async function restoreRequest(id) {
   try {
     const response = await fetch(`/api/requests/${id}`, { cache: "no-store" });
-    const data = await response.json();
-    if (!response.ok) return showExpiredRequest();
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 404) return showExpiredRequest();
+    if (!response.ok) throw new Error(data.error || "Request unavailable");
     if (data.status === "answered") {
       return showResult(data.name, data.value, data.journey, data.photoUrl);
     }
     showWaiting(data);
   } catch (error) {
     console.error(error);
-    showExpiredRequest();
+    pollTimer = setTimeout(() => restoreRequest(id), 1200);
   }
 }
 

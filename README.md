@@ -113,11 +113,14 @@ with `npm run test:e2e`. Install Chromium once before the first local E2E run:
 npx playwright install chromium
 ```
 
-The E2E suite drives the request and private answer pages with and without shared
-locations while using local mock Pushover and encrypted Web Push endpoints. The
-location journey also verifies opt-in notification delivery; the no-location
-journey verifies that no push is sent without opt-in. CI retains its JUnit output,
-HTML report, screenshots, and failure traces/videos as workflow artifacts.
+The unit suite exercises API validation, concurrent answer protection, expiry,
+location shaping, photo privacy, cache headers, and notification failures through
+ephemeral local servers. The E2E suite drives the request and private answer pages
+with and without shared locations while using local mock Pushover and encrypted
+Web Push endpoints. It also covers waiting-page recovery, a real photo
+upload/reveal, fresh follow-up requests, and German and Brazilian Portuguese
+selection. CI retains its JUnit output, HTML report, screenshots, and failure
+traces/videos as workflow artifacts.
 
 ### Gitea Container Registry
 
