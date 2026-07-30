@@ -21,14 +21,19 @@ const server = spawn(process.execPath, ["server.js"], {
 });
 
 await new Promise((resolve, reject) => {
-  const timeout = setTimeout(() => reject(new Error("Server did not start")), 5000);
+  const timeout = setTimeout(
+    () => reject(new Error("Server did not start")),
+    5000,
+  );
   server.stdout.on("data", (chunk) => {
     if (chunk.toString().includes("listening")) {
       clearTimeout(timeout);
       resolve();
     }
   });
-  server.once("exit", (code) => reject(new Error(`Server exited with ${code}`)));
+  server.once("exit", (code) =>
+    reject(new Error(`Server exited with ${code}`)),
+  );
 });
 
 test.after(async () => {
@@ -57,7 +62,7 @@ test("push configuration is disabled when VAPID keys are absent", async () => {
 test("HTML embeds the deployment version in its footer and asset URLs", async () => {
   const response = await fetch(`http://localhost:${port}/`);
   const html = await response.text();
-  assert.match(html, />vtest-bu<\/span>/);
+  assert.match(html, />\s*vtest-bu<\/span/);
   assert.match(html, /\/app\.js\?v=test-bu/);
   assert.match(html, /\/i18n\.js\?v=test-bu/);
   assert.match(html, /id="waiting-phrase"/);
@@ -70,21 +75,26 @@ test("HTML embeds the deployment version in its footer and asset URLs", async ()
 });
 
 test("private answer HTML carries the same deployment footer and fresh asset URLs", async () => {
-  const response = await fetch(`http://localhost:${port}/respond/example-token`);
+  const response = await fetch(
+    `http://localhost:${port}/respond/example-token`,
+  );
   const html = await response.text();
   assert.match(html, /made with <span>♥<\/span> for Nayane &amp; Ben/);
-  assert.match(html, />vtest-bu<\/span>/);
+  assert.match(html, />\s*vtest-bu<\/span/);
   assert.match(html, /\/respond\.js\?v=test-bu/);
   assert.match(html, /\/i18n\.js\?v=test-bu/);
   assert.match(html, /\/styles\.css\?v=test-bu/);
   assert.doesNotMatch(html, /__(APP_VERSION|LOVE_NAME)__/);
-  assert.match(html, /<button type="submit"><span data-button-label/);
+  assert.match(html, /<button type="submit">\s*<span data-button-label/);
 });
 
 test("application scripts are never stored so new reveal features load immediately", async () => {
   const response = await fetch(`http://localhost:${port}/app.js`);
   assert.equal(response.status, 200);
-  assert.equal(response.headers.get("cache-control"), "no-store, no-cache, must-revalidate, max-age=0");
+  assert.equal(
+    response.headers.get("cache-control"),
+    "no-store, no-cache, must-revalidate, max-age=0",
+  );
   assert.equal(response.headers.get("pragma"), "no-cache");
 });
 
@@ -92,13 +102,18 @@ test("service worker is served fresh", async () => {
   const response = await fetch(`http://localhost:${port}/sw.js`);
   assert.equal(response.status, 200);
   assert.match(await response.text(), /notificationclick/);
-  assert.equal(response.headers.get("cache-control"), "no-store, no-cache, must-revalidate, max-age=0");
+  assert.equal(
+    response.headers.get("cache-control"),
+    "no-store, no-cache, must-revalidate, max-age=0",
+  );
 });
 
 test("creates and answers a love request", async () => {
   let responseUrl = "";
   server.stdout.on("data", (chunk) => {
-    const match = chunk.toString().match(/(http:\/\/localhost:\d+\/respond\/\S+)/);
+    const match = chunk
+      .toString()
+      .match(/(http:\/\/localhost:\d+\/respond\/\S+)/);
     if (match) responseUrl = match[1];
   });
 
@@ -113,7 +128,9 @@ test("creates and answers a love request", async () => {
   assert.equal(createResponse.status, 201);
   const created = await createResponse.json();
 
-  const bookmarkResponse = await fetch(`http://localhost:${port}/request/${created.id}`);
+  const bookmarkResponse = await fetch(
+    `http://localhost:${port}/request/${created.id}`,
+  );
   assert.equal(bookmarkResponse.status, 200);
   assert.match(await bookmarkResponse.text(), /id="waiting-view"/);
 
@@ -121,7 +138,9 @@ test("creates and answers a love request", async () => {
   const token = responseUrl.split("/").pop();
   assert.ok(token);
 
-  const privateRequestResponse = await fetch(`http://localhost:${port}/api/respond/${token}`);
+  const privateRequestResponse = await fetch(
+    `http://localhost:${port}/api/respond/${token}`,
+  );
   assert.deepEqual(await privateRequestResponse.json(), {
     name: "Nayane",
     answered: false,
@@ -130,25 +149,33 @@ test("creates and answers a love request", async () => {
     ipLocation: null,
   });
 
-  const photoUploadResponse = await fetch(`http://localhost:${port}/api/respond/${token}/photo`, {
-    method: "POST",
-    headers: { "Content-Type": "image/jpeg" },
-    body: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
-  });
+  const photoUploadResponse = await fetch(
+    `http://localhost:${port}/api/respond/${token}/photo`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "image/jpeg" },
+      body: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
+    },
+  );
   assert.equal(photoUploadResponse.status, 201);
   assert.equal((await photoUploadResponse.json()).saved, true);
 
-  const answerResponse = await fetch(`http://localhost:${port}/api/respond/${token}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      value: 875,
-      location: { latitude: 47.3885, longitude: 8.175 },
-    }),
-  });
+  const answerResponse = await fetch(
+    `http://localhost:${port}/api/respond/${token}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        value: 875,
+        location: { latitude: 47.3885, longitude: 8.175 },
+      }),
+    },
+  );
   assert.equal(answerResponse.status, 200);
 
-  const statusResponse = await fetch(`http://localhost:${port}/api/requests/${created.id}`);
+  const statusResponse = await fetch(
+    `http://localhost:${port}/api/requests/${created.id}`,
+  );
   assert.deepEqual(await statusResponse.json(), {
     id: created.id,
     name: "Nayane",
@@ -160,7 +187,9 @@ test("creates and answers a love request", async () => {
     },
     photoUrl: `/api/requests/${created.id}/photo`,
   });
-  const photoResponse = await fetch(`http://localhost:${port}/api/requests/${created.id}/photo`);
+  const photoResponse = await fetch(
+    `http://localhost:${port}/api/requests/${created.id}/photo`,
+  );
   assert.equal(photoResponse.status, 200);
   assert.equal(photoResponse.headers.get("content-type"), "image/jpeg");
 });

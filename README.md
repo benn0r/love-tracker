@@ -11,8 +11,8 @@ meter, and an optional map connecting both hearts.
 
 ## Screenshots
 
-| Waiting with notifications enabled | Answer reveal and love journey |
-| --- | --- |
+| Waiting with notifications enabled                                                | Answer reveal and love journey                                          |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | ![Fantasy request waiting for an answer](docs/screenshots/waiting-for-answer.png) | ![Fantasy answer reveal with a map](docs/screenshots/answer-reveal.png) |
 
 ## Features
@@ -43,21 +43,21 @@ the terminal. Open <http://localhost:3000>.
 
 ## Environment variables
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `LOVE_NAME` | No | Name shown in the example input and “made with love” footer. Defaults to `Nayane`. |
-| `IP_GEOLOCATION_ENABLED` | No | Set to `false` to disable automatic coarse IP geolocation. Enabled by default. |
-| `IP_GEOLOCATION_URL` | No | IP lookup URL containing an `{ip}` placeholder. Defaults to `https://ipwho.is/{ip}`. |
-| `PUBLIC_URL` | Production | Public base URL used in Pushover response links. |
-| `PUSHOVER_APP_TOKEN` | Production | Application token from Pushover. |
-| `PUSHOVER_USER_KEY` | Production | Pushover user or group key receiving response links. |
-| `PUSHOVER_API_URL` | No | Pushover-compatible API endpoint. Defaults to the official Pushover messages API; override it for testing. |
-| `VAPID_PUBLIC_KEY` | Production | Public VAPID key used by browsers to create Web Push subscriptions. |
-| `VAPID_PRIVATE_KEY` | Production | Secret VAPID key used by the server to sign Web Push delivery requests. |
-| `VAPID_SUBJECT` | Production | Contact URI for Web Push, such as `mailto:notifications@example.com` or the public app URL. |
-| `DATA_DIR` | No | Persistent request/photo directory. Defaults to `./data` locally and `/data` in Docker. |
-| `PORT` | No | HTTP port. Defaults to `3000`. |
-| `APP_VERSION` / `SOURCE_COMMIT` | No | Deployment identifier embedded in HTML and asset URLs. Coolify can provide the commit automatically. |
+| Variable                        | Required   | Description                                                                                                |
+| ------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `LOVE_NAME`                     | No         | Name shown in the example input and “made with love” footer. Defaults to `Nayane`.                         |
+| `IP_GEOLOCATION_ENABLED`        | No         | Set to `false` to disable automatic coarse IP geolocation. Enabled by default.                             |
+| `IP_GEOLOCATION_URL`            | No         | IP lookup URL containing an `{ip}` placeholder. Defaults to `https://ipwho.is/{ip}`.                       |
+| `PUBLIC_URL`                    | Production | Public base URL used in Pushover response links.                                                           |
+| `PUSHOVER_APP_TOKEN`            | Production | Application token from Pushover.                                                                           |
+| `PUSHOVER_USER_KEY`             | Production | Pushover user or group key receiving response links.                                                       |
+| `PUSHOVER_API_URL`              | No         | Pushover-compatible API endpoint. Defaults to the official Pushover messages API; override it for testing. |
+| `VAPID_PUBLIC_KEY`              | Production | Public VAPID key used by browsers to create Web Push subscriptions.                                        |
+| `VAPID_PRIVATE_KEY`             | Production | Secret VAPID key used by the server to sign Web Push delivery requests.                                    |
+| `VAPID_SUBJECT`                 | Production | Contact URI for Web Push, such as `mailto:notifications@example.com` or the public app URL.                |
+| `DATA_DIR`                      | No         | Persistent request/photo directory. Defaults to `./data` locally and `/data` in Docker.                    |
+| `PORT`                          | No         | HTTP port. Defaults to `3000`.                                                                             |
+| `APP_VERSION` / `SOURCE_COMMIT` | No         | Deployment identifier embedded in HTML and asset URLs. Coolify can provide the commit automatically.       |
 
 Set `LOVE_NAME` to personalize the installation:
 

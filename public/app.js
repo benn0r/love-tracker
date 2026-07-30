@@ -6,7 +6,10 @@ const askError = document.querySelector("#ask-error");
 const { locale, t, apply, resultMessages, waitingPhrases } = window.LoveI18n;
 const loveName = document.body.dataset.loveName;
 apply({ loveName });
-if (location.pathname === "/" && new URL(location.href).searchParams.has("new")) {
+if (
+  location.pathname === "/" &&
+  new URL(location.href).searchParams.has("new")
+) {
   history.replaceState({}, "", "/");
 }
 const requestPathMatch = location.pathname.match(/^\/request\/([0-9a-f-]+)$/);
@@ -59,7 +62,9 @@ function showWaiting(request) {
   currentRequestId = request.id;
   askView.classList.add("hidden");
   waitingView.classList.remove("hidden");
-  document.querySelector("#waiting-copy").textContent = t("waiting.copy", { name: request.name });
+  document.querySelector("#waiting-copy").textContent = t("waiting.copy", {
+    name: request.name,
+  });
   startWaitingPhrases();
   preparePushPrompt(request.id);
   poll(request.id, request.name);
@@ -69,9 +74,16 @@ async function preparePushPrompt(id) {
   const prompt = document.querySelector("#push-prompt");
   const button = document.querySelector("#enable-push");
   const status = document.querySelector("#push-status");
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+  if (
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  )
+    return;
   try {
-    const config = await fetch("/api/push/config", { cache: "no-store" }).then((response) => response.json());
+    const config = await fetch("/api/push/config", { cache: "no-store" }).then(
+      (response) => response.json(),
+    );
     if (!config.enabled || !config.publicKey || id !== currentRequestId) return;
     prompt.classList.remove("hidden");
     button.onclick = () => enablePush(id, config.publicKey, button, status);
@@ -92,16 +104,22 @@ async function enablePush(id, publicKey, button, status) {
     await navigator.serviceWorker.register("/sw.js");
     const registration = await navigator.serviceWorker.ready;
     const existing = await registration.pushManager.getSubscription();
-    const subscription = existing || await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
+    const subscription =
+      existing ||
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      }));
     const response = await fetch(`/api/requests/${id}/push-subscription`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subscription: subscription.toJSON(), language: locale }),
+      body: JSON.stringify({
+        subscription: subscription.toJSON(),
+        language: locale,
+      }),
     });
-    if (!response.ok) throw new Error((await response.json()).error || t("push.error"));
+    if (!response.ok)
+      throw new Error((await response.json()).error || t("push.error"));
     button.classList.add("hidden");
     status.textContent = t("push.enabled");
   } catch (error) {
@@ -111,7 +129,7 @@ async function enablePush(id, publicKey, button, status) {
 }
 
 function urlBase64ToUint8Array(value) {
-  const padding = "=".repeat((4 - value.length % 4) % 4);
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
   return Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
 }
@@ -152,7 +170,12 @@ async function poll(id, name) {
       throw new Error(data.error);
     }
     if (data.status === "answered") {
-      return showResult(data.name || name, data.value, data.journey, data.photoUrl);
+      return showResult(
+        data.name || name,
+        data.value,
+        data.journey,
+        data.photoUrl,
+      );
     }
   } catch (error) {
     console.error(error);
@@ -187,7 +210,9 @@ function showExpiredRequest() {
     <p class="intro">${t("request.expiredCopy")}</p>
     <button type="button" id="new-request-button">${t("request.new")}</button>
   `;
-  document.querySelector("#new-request-button").addEventListener("click", () => location.assign("/"));
+  document
+    .querySelector("#new-request-button")
+    .addEventListener("click", () => location.assign("/"));
 }
 
 function showResult(name, value, journey, photoUrl) {
@@ -196,8 +221,11 @@ function showResult(name, value, journey, photoUrl) {
   waitingView.classList.add("hidden");
   resultView.classList.remove("hidden");
   document.querySelector("#push-prompt").classList.add("hidden");
-  document.querySelector("#result-title").innerHTML = t("result.title", { name: escapeHtml(name) });
-  document.querySelector("#result-message").textContent = pickResultMessage(value);
+  document.querySelector("#result-title").innerHTML = t("result.title", {
+    name: escapeHtml(name),
+  });
+  document.querySelector("#result-message").textContent =
+    pickResultMessage(value);
   if (journey) showLoveMap(name, journey);
   if (photoUrl) showLovePhoto(photoUrl);
 
@@ -215,7 +243,10 @@ function showResult(name, value, journey, photoUrl) {
     number.textContent = Math.round(value * eased);
     const displayedProgress = normalizedValue * eased;
     fill.style.width = `${displayedProgress}%`;
-    progressBar.setAttribute("aria-valuenow", String(Math.round(displayedProgress)));
+    progressBar.setAttribute(
+      "aria-valuenow",
+      String(Math.round(displayedProgress)),
+    );
     if (progress < 1) requestAnimationFrame(animate);
   }
   requestAnimationFrame(animate);
@@ -235,16 +266,21 @@ async function showLovePhoto(photoUrl) {
 
   async function load(attempt = 1) {
     retryButton.classList.add("hidden");
-    caption.textContent = attempt > 1 ? t("result.photoLoading") : t("result.photoCaption");
+    caption.textContent =
+      attempt > 1 ? t("result.photoLoading") : t("result.photoCaption");
     try {
       const separator = photoUrl.includes("?") ? "&" : "?";
-      const response = await fetch(`${photoUrl}${separator}fresh=${Date.now()}`, {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
-      });
+      const response = await fetch(
+        `${photoUrl}${separator}fresh=${Date.now()}`,
+        {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
+        },
+      );
       if (!response.ok) throw new Error(`Photo returned ${response.status}`);
       const blob = await response.blob();
-      if (!blob.type.startsWith("image/") || !blob.size) throw new Error("Invalid photo response");
+      if (!blob.type.startsWith("image/") || !blob.size)
+        throw new Error("Invalid photo response");
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       objectUrl = URL.createObjectURL(blob);
       image.addEventListener("load", reveal, { once: true });
@@ -271,10 +307,11 @@ function getApproximateLocation() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null);
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve({
-        latitude: Math.round(coords.latitude * 100) / 100,
-        longitude: Math.round(coords.longitude * 100) / 100,
-      }),
+      ({ coords }) =>
+        resolve({
+          latitude: Math.round(coords.latitude * 100) / 100,
+          longitude: Math.round(coords.longitude * 100) / 100,
+        }),
       () => resolve(null),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
     );
@@ -284,8 +321,10 @@ function getApproximateLocation() {
 function showLoveMap(name, journey) {
   const map = document.querySelector("#love-map");
   const mapTitle = document.querySelector("#love-map-title");
-  const latDirection = journey.to.latitude >= journey.from.latitude ? "north" : "south";
-  const lonDirection = journey.to.longitude >= journey.from.longitude ? "east" : "west";
+  const latDirection =
+    journey.to.latitude >= journey.from.latitude ? "north" : "south";
+  const lonDirection =
+    journey.to.longitude >= journey.from.longitude ? "east" : "west";
   const direction = t(`direction.${latDirection}-${lonDirection}`);
 
   mapTitle.textContent = t("result.journeyDynamic", { direction, name });
@@ -305,7 +344,8 @@ function initializeRealMap(name, journey) {
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
 
   const route = createArchedRoute(origin, destination);
@@ -324,10 +364,18 @@ function initializeRealMap(name, journey) {
 
   L.marker(origin, { icon: originIcon })
     .addTo(map)
-    .bindTooltip(t("result.origin"), { permanent: true, direction: "bottom", offset: [0, 12] });
+    .bindTooltip(t("result.origin"), {
+      permanent: true,
+      direction: "bottom",
+      offset: [0, 12],
+    });
   L.marker(destination, { icon: destinationIcon })
     .addTo(map)
-    .bindTooltip(name, { permanent: true, direction: "bottom", offset: [0, 12] });
+    .bindTooltip(name, {
+      permanent: true,
+      direction: "bottom",
+      offset: [0, 12],
+    });
 
   L.polyline(route, {
     color: "#bd3955",
@@ -380,8 +428,12 @@ function createArchedRoute(from, to) {
     const t = index / pointCount;
     const inverse = 1 - t;
     return [
-      inverse * inverse * from[0] + 2 * inverse * t * control[0] + t * t * to[0],
-      inverse * inverse * from[1] + 2 * inverse * t * control[1] + t * t * to[1],
+      inverse * inverse * from[0] +
+        2 * inverse * t * control[0] +
+        t * t * to[0],
+      inverse * inverse * from[1] +
+        2 * inverse * t * control[1] +
+        t * t * to[1],
     ];
   });
 }
@@ -410,6 +462,7 @@ function pickResultMessage(value) {
   const localizedPool = resultMessages.find(([max]) => value <= max)[1];
   return localizedPool[Math.floor(Math.random() * localizedPool.length)];
 
+  /* eslint-disable no-unreachable -- Kept as a copywriting archive for translators. */
   /* English source archive kept here for easy copywriting reference. */
   const messagePools = [
     {
@@ -559,6 +612,7 @@ function pickResultMessage(value) {
 
   const pool = messagePools.find((entry) => value <= entry.max).messages;
   return pool[Math.floor(Math.random() * pool.length)];
+  /* eslint-enable no-unreachable */
 }
 
 function escapeHtml(value) {
@@ -571,10 +625,15 @@ function openFreshRequest() {
   clearTimeout(pollTimer);
   stopWaitingPhrases();
   const freshUrl = new URL("/", location.origin);
-  freshUrl.searchParams.set("new", `${Date.now()}-${crypto.randomUUID?.() || Math.random()}`);
+  freshUrl.searchParams.set(
+    "new",
+    `${Date.now()}-${crypto.randomUUID?.() || Math.random()}`,
+  );
   location.replace(freshUrl);
 }
 
-document.querySelector("#again-button").addEventListener("click", openFreshRequest);
+document
+  .querySelector("#again-button")
+  .addEventListener("click", openFreshRequest);
 
 if (requestPathMatch) restoreRequest(requestPathMatch[1]);

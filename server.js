@@ -12,13 +12,21 @@ const DATA_DIR = process.env.DATA_DIR || join(ROOT, "data");
 const DATA_FILE = join(DATA_DIR, "requests.json");
 const PHOTO_DIR = join(DATA_DIR, "photos");
 const PORT = Number(process.env.PORT || 3000);
-const APP_VERSION = String(process.env.APP_VERSION || process.env.SOURCE_COMMIT || "local").slice(0, 7);
-const LOVE_NAME = String(process.env.LOVE_NAME || "Nayane").trim().slice(0, 60) || "Nayane";
+const APP_VERSION = String(
+  process.env.APP_VERSION || process.env.SOURCE_COMMIT || "local",
+).slice(0, 7);
+const LOVE_NAME =
+  String(process.env.LOVE_NAME || "Nayane")
+    .trim()
+    .slice(0, 60) || "Nayane";
 const IP_GEOLOCATION_ENABLED = process.env.IP_GEOLOCATION_ENABLED !== "false";
-const IP_GEOLOCATION_URL = process.env.IP_GEOLOCATION_URL || "https://ipwho.is/{ip}";
+const IP_GEOLOCATION_URL =
+  process.env.IP_GEOLOCATION_URL || "https://ipwho.is/{ip}";
 const VAPID_PUBLIC_KEY = String(process.env.VAPID_PUBLIC_KEY || "").trim();
 const VAPID_PRIVATE_KEY = String(process.env.VAPID_PRIVATE_KEY || "").trim();
-const VAPID_SUBJECT = String(process.env.VAPID_SUBJECT || "mailto:notifications@example.com").trim();
+const VAPID_SUBJECT = String(
+  process.env.VAPID_SUBJECT || "mailto:notifications@example.com",
+).trim();
 const WEB_PUSH_ENABLED = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
 const MAX_NAME_LENGTH = 60;
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -47,7 +55,8 @@ async function loadRequests() {
     const stored = JSON.parse(await readFile(DATA_FILE, "utf8"));
     requests = new Map(stored.map((item) => [item.id, item]));
   } catch (error) {
-    if (error.code !== "ENOENT") console.error("Could not load request data:", error);
+    if (error.code !== "ENOENT")
+      console.error("Could not load request data:", error);
   }
   pruneExpired();
 }
@@ -107,13 +116,15 @@ function logRequest(req, res) {
   const writeLog = (outcome) => {
     if (logged) return;
     logged = true;
-    console.log(JSON.stringify({
-      type: "http_request",
-      ...request,
-      status: res.statusCode,
-      durationMs: Date.now() - startedAt,
-      outcome,
-    }));
+    console.log(
+      JSON.stringify({
+        type: "http_request",
+        ...request,
+        status: res.statusCode,
+        durationMs: Date.now() - startedAt,
+        outcome,
+      }),
+    );
   };
 
   res.once("finish", () => writeLog("completed"));
@@ -177,46 +188,73 @@ function normalizePushSubscription(value) {
   if (
     !/^https:\/\//.test(endpoint) ||
     endpoint.length > 2000 ||
-    !p256dh || p256dh.length > 200 ||
-    !auth || auth.length > 100
-  ) return null;
-  return { endpoint, expirationTime: value.expirationTime || null, keys: { p256dh, auth } };
+    !p256dh ||
+    p256dh.length > 200 ||
+    !auth ||
+    auth.length > 100
+  )
+    return null;
+  return {
+    endpoint,
+    expirationTime: value.expirationTime || null,
+    keys: { p256dh, auth },
+  };
 }
 
 function pushCopy(language, name) {
   if (language === "de") {
-    return { title: "Deine Liebesantwort ist da ♥", body: `${name}, öffne den Love Tracker und entdecke deine Antwort.` };
+    return {
+      title: "Deine Liebesantwort ist da ♥",
+      body: `${name}, öffne den Love Tracker und entdecke deine Antwort.`,
+    };
   }
   if (language === "pt-BR") {
-    return { title: "Sua resposta de amor chegou ♥", body: `${name}, abra o Love Tracker e descubra sua resposta.` };
+    return {
+      title: "Sua resposta de amor chegou ♥",
+      body: `${name}, abra o Love Tracker e descubra sua resposta.`,
+    };
   }
-  return { title: "Your love answer is ready ♥", body: `${name}, open Love Tracker and discover your answer.` };
+  return {
+    title: "Your love answer is ready ♥",
+    body: `${name}, open Love Tracker and discover your answer.`,
+  };
 }
 
 async function sendAnswerPush(request, subscription) {
   if (!WEB_PUSH_ENABLED || !subscription) return;
   const copy = pushCopy(request.pushLanguage, request.name);
   try {
-    await webpush.sendNotification(subscription, JSON.stringify({
-      ...copy,
-      url: `/request/${request.id}`,
-      tag: `love-answer-${request.id}`,
-    }), { TTL: 24 * 60 * 60, urgency: "high", timeout: 10_000 });
+    await webpush.sendNotification(
+      subscription,
+      JSON.stringify({
+        ...copy,
+        url: `/request/${request.id}`,
+        tag: `love-answer-${request.id}`,
+      }),
+      { TTL: 24 * 60 * 60, urgency: "high", timeout: 10_000 },
+    );
     console.log(`Answer notification delivered for request ${request.id}`);
   } catch (error) {
-    console.warn(`Answer notification failed for request ${request.id}: ${error.statusCode || error.message}`);
+    console.warn(
+      `Answer notification failed for request ${request.id}: ${error.statusCode || error.message}`,
+    );
   }
 }
 
 function decodePhoto(dataUrl, requestId) {
   if (!dataUrl) return null;
-  const match = String(dataUrl).match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  const match = String(dataUrl).match(
+    /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/,
+  );
   if (!match) throw new Error("Unsupported photo format");
   const bytes = Buffer.from(match[2], "base64");
-  if (!bytes.length || bytes.length > 1_500_000) throw new Error("Photo is too large");
+  if (!bytes.length || bytes.length > 1_500_000)
+    throw new Error("Photo is too large");
 
   const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
-  const isPng = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  const isPng = bytes
+    .subarray(0, 8)
+    .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   const isWebp =
     bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
     bytes.subarray(8, 12).toString("ascii") === "WEBP";
@@ -228,16 +266,24 @@ function decodePhoto(dataUrl, requestId) {
 }
 
 function validatePhotoBytes(bytes, contentType, requestId) {
-  if (!bytes.length || bytes.length > 2_000_000) throw new Error("Photo is too large");
+  if (!bytes.length || bytes.length > 2_000_000)
+    throw new Error("Photo is too large");
   const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8;
-  const isPng = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  const isPng = bytes
+    .subarray(0, 8)
+    .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   const isWebp =
     bytes.subarray(0, 4).toString("ascii") === "RIFF" &&
     bytes.subarray(8, 12).toString("ascii") === "WEBP";
   if (!isJpeg && !isPng && !isWebp) throw new Error("Invalid photo data");
 
-  const detectedType = isJpeg ? "image/jpeg" : isPng ? "image/png" : "image/webp";
-  if (contentType && !contentType.startsWith(detectedType)) throw new Error("Photo type mismatch");
+  const detectedType = isJpeg
+    ? "image/jpeg"
+    : isPng
+      ? "image/png"
+      : "image/webp";
+  if (contentType && !contentType.startsWith(detectedType))
+    throw new Error("Photo type mismatch");
   const extension = isJpeg ? "jpg" : isPng ? "png" : "webp";
   return { bytes, type: detectedType, filename: `${requestId}.${extension}` };
 }
@@ -252,7 +298,9 @@ function getClientIp(req) {
   ];
 
   for (const candidate of candidates) {
-    let normalized = String(candidate || "").trim().replace(/^["']|["']$/g, "");
+    let normalized = String(candidate || "")
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (normalized.startsWith("[") && normalized.includes("]")) {
       normalized = normalized.slice(1, normalized.indexOf("]"));
     }
@@ -282,17 +330,24 @@ async function getIpLocation(req) {
   if (!IP_GEOLOCATION_ENABLED) return null;
   const ip = getClientIp(req);
   if (!ip) {
-    console.warn("IP location unavailable: no public client address was forwarded");
+    console.warn(
+      "IP location unavailable: no public client address was forwarded",
+    );
     return null;
   }
 
   try {
-    const response = await fetch(IP_GEOLOCATION_URL.replace("{ip}", encodeURIComponent(ip)), {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(4000),
-    });
+    const response = await fetch(
+      IP_GEOLOCATION_URL.replace("{ip}", encodeURIComponent(ip)),
+      {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(4000),
+      },
+    );
     if (!response.ok) {
-      console.warn(`IP location unavailable: provider returned ${response.status}`);
+      console.warn(
+        `IP location unavailable: provider returned ${response.status}`,
+      );
       return null;
     }
     const data = await response.json();
@@ -313,7 +368,9 @@ async function getIpLocation(req) {
       latitude: Math.round(latitude * 100) / 100,
       longitude: Math.round(longitude * 100) / 100,
     };
-    console.log(`IP location resolved: ${[location.city, location.region, location.country].filter(Boolean).join(", ")}`);
+    console.log(
+      `IP location resolved: ${[location.city, location.region, location.country].filter(Boolean).join(", ")}`,
+    );
     return location;
   } catch (error) {
     console.warn("IP location lookup failed:", error.message);
@@ -324,7 +381,8 @@ async function getIpLocation(req) {
 async function sendPushover(name, responseUrl) {
   const token = process.env.PUSHOVER_APP_TOKEN;
   const user = process.env.PUSHOVER_USER_KEY;
-  const apiUrl = process.env.PUSHOVER_API_URL || "https://api.pushover.net/1/messages.json";
+  const apiUrl =
+    process.env.PUSHOVER_API_URL || "https://api.pushover.net/1/messages.json";
   if (!token || !user) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("Pushover credentials are not configured");
@@ -360,9 +418,13 @@ async function createRequest(req, res) {
     return sendJson(res, 400, { error: "That request could not be read." });
   }
 
-  const name = String(body.name || "").trim().replace(/\s+/g, " ");
+  const name = String(body.name || "")
+    .trim()
+    .replace(/\s+/g, " ");
   if (!name || name.length > MAX_NAME_LENGTH) {
-    return sendJson(res, 400, { error: "Please enter a name of up to 60 characters." });
+    return sendJson(res, 400, {
+      error: "Please enter a name of up to 60 characters.",
+    });
   }
   const requesterLocation = normalizeLocation(body.location);
   const ipLocation = await getIpLocation(req);
@@ -391,32 +453,45 @@ async function createRequest(req, res) {
     sendJson(res, 201, { id: request.id, name: request.name });
   } catch (error) {
     console.error("Could not create love request:", error);
-    sendJson(res, 502, { error: "I couldn’t send the love note. Please try again in a moment." });
+    sendJson(res, 502, {
+      error: "I couldn’t send the love note. Please try again in a moment.",
+    });
   }
 }
 
 async function subscribeToRequest(req, res, id) {
-  if (!WEB_PUSH_ENABLED) return sendJson(res, 503, { error: "Notifications are not configured." });
+  if (!WEB_PUSH_ENABLED)
+    return sendJson(res, 503, { error: "Notifications are not configured." });
   const request = requests.get(id);
-  if (!request) return sendJson(res, 404, { error: "This love note has expired." });
-  if (request.value !== null) return sendJson(res, 409, { error: "This love note was already answered." });
+  if (!request)
+    return sendJson(res, 404, { error: "This love note has expired." });
+  if (request.value !== null)
+    return sendJson(res, 409, {
+      error: "This love note was already answered.",
+    });
   let body;
   try {
     body = await readJson(req, 12_000);
   } catch {
-    return sendJson(res, 400, { error: "That notification subscription could not be read." });
+    return sendJson(res, 400, {
+      error: "That notification subscription could not be read.",
+    });
   }
   const subscription = normalizePushSubscription(body.subscription);
-  if (!subscription) return sendJson(res, 400, { error: "Invalid notification subscription." });
+  if (!subscription)
+    return sendJson(res, 400, { error: "Invalid notification subscription." });
   request.pushSubscription = subscription;
-  request.pushLanguage = ["en", "de", "pt-BR"].includes(body.language) ? body.language : "en";
+  request.pushLanguage = ["en", "de", "pt-BR"].includes(body.language)
+    ? body.language
+    : "en";
   await saveRequests();
   sendJson(res, 201, { subscribed: true });
 }
 
 function getRequest(res, id) {
   const request = requests.get(id);
-  if (!request) return sendJson(res, 404, { error: "This love note has expired." });
+  if (!request)
+    return sendJson(res, 404, { error: "This love note has expired." });
   sendJson(res, 200, {
     id: request.id,
     name: request.name,
@@ -431,7 +506,10 @@ function getRequest(res, id) {
             to: request.requesterLocation || request.location,
           }
         : null,
-    photoUrl: request.value !== null && request.photo ? `/api/requests/${request.id}/photo` : null,
+    photoUrl:
+      request.value !== null && request.photo
+        ? `/api/requests/${request.id}/photo`
+        : null,
   });
 }
 
@@ -456,7 +534,8 @@ async function getRequestPhoto(res, id) {
 
 function getResponseRequest(res, token) {
   const request = [...requests.values()].find((item) => item.token === token);
-  if (!request) return sendJson(res, 404, { error: "This private link has expired." });
+  if (!request)
+    return sendJson(res, 404, { error: "This private link has expired." });
   sendJson(res, 200, {
     name: request.name,
     answered: request.value !== null,
@@ -468,7 +547,8 @@ function getResponseRequest(res, token) {
 
 async function answerRequest(req, res, token) {
   const request = [...requests.values()].find((item) => item.token === token);
-  if (!request) return sendJson(res, 404, { error: "This private link has expired." });
+  if (!request)
+    return sendJson(res, 404, { error: "This private link has expired." });
 
   let body;
   try {
@@ -478,7 +558,9 @@ async function answerRequest(req, res, token) {
   }
   const value = Number(body.value);
   if (!Number.isInteger(value) || value < 0 || value > 1000) {
-    return sendJson(res, 400, { error: "Choose a whole number between 0 and 1000." });
+    return sendJson(res, 400, {
+      error: "Choose a whole number between 0 and 1000.",
+    });
   }
 
   request.value = value;
@@ -503,39 +585,56 @@ async function answerRequest(req, res, token) {
 
 async function uploadResponsePhoto(req, res, token) {
   const request = [...requests.values()].find((item) => item.token === token);
-  if (!request) return sendJson(res, 404, { error: "This private link has expired." });
-  if (request.value !== null) return sendJson(res, 409, { error: "This love note was already answered." });
+  if (!request)
+    return sendJson(res, 404, { error: "This private link has expired." });
+  if (request.value !== null)
+    return sendJson(res, 409, {
+      error: "This love note was already answered.",
+    });
 
   try {
     const bytes = await readBuffer(req);
-    const photo = validatePhotoBytes(bytes, String(req.headers["content-type"] || ""), request.id);
+    const photo = validatePhotoBytes(
+      bytes,
+      String(req.headers["content-type"] || ""),
+      request.id,
+    );
     await writeFile(join(PHOTO_DIR, photo.filename), photo.bytes);
     request.photo = { filename: photo.filename, type: photo.type };
     await saveRequests();
-    console.log(`Photo saved for request ${request.id} (${photo.bytes.length} bytes)`);
+    console.log(
+      `Photo saved for request ${request.id} (${photo.bytes.length} bytes)`,
+    );
     sendJson(res, 201, { saved: true, bytes: photo.bytes.length });
   } catch (error) {
     console.error("Could not save response photo:", error.message);
-    sendJson(res, 400, { error: error.message || "The photo could not be saved." });
+    sendJson(res, 400, {
+      error: error.message || "The photo could not be saved.",
+    });
   }
 }
 
 async function serveFile(res, pathname) {
   const requested = pathname === "/" ? "index.html" : pathname.slice(1);
   const filePath = normalize(join(PUBLIC_DIR, requested));
-  if (!filePath.startsWith(PUBLIC_DIR)) return sendJson(res, 403, { error: "Forbidden" });
+  if (!filePath.startsWith(PUBLIC_DIR))
+    return sendJson(res, 403, { error: "Forbidden" });
   try {
     let content = await readFile(filePath);
     const extension = extname(filePath);
     if (extension === ".html") {
       const escapeHtml = (value) =>
-        value.replace(/[&<>"']/g, (character) => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-        })[character]);
+        value.replace(
+          /[&<>"']/g,
+          (character) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[character],
+        );
       content = Buffer.from(
         content
           .toString()
@@ -572,29 +671,42 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { version: APP_VERSION });
     }
     if (req.method === "GET" && pathname === "/api/push/config") {
-      return sendJson(res, 200, { enabled: WEB_PUSH_ENABLED, publicKey: WEB_PUSH_ENABLED ? VAPID_PUBLIC_KEY : null });
+      return sendJson(res, 200, {
+        enabled: WEB_PUSH_ENABLED,
+        publicKey: WEB_PUSH_ENABLED ? VAPID_PUBLIC_KEY : null,
+      });
     }
     if (req.method === "POST" && pathname === "/api/requests") {
       return await createRequest(req, res);
     }
 
     const requestMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)$/);
-    if (req.method === "GET" && requestMatch) return getRequest(res, requestMatch[1]);
-    const subscriptionMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)\/push-subscription$/);
+    if (req.method === "GET" && requestMatch)
+      return getRequest(res, requestMatch[1]);
+    const subscriptionMatch = pathname.match(
+      /^\/api\/requests\/([0-9a-f-]+)\/push-subscription$/,
+    );
     if (req.method === "POST" && subscriptionMatch) {
       return await subscribeToRequest(req, res, subscriptionMatch[1]);
     }
-    const requestPhotoMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)\/photo$/);
+    const requestPhotoMatch = pathname.match(
+      /^\/api\/requests\/([0-9a-f-]+)\/photo$/,
+    );
     if (req.method === "GET" && requestPhotoMatch) {
       return await getRequestPhoto(res, requestPhotoMatch[1]);
     }
 
-    const responseApiMatch = pathname.match(/^\/api\/respond\/([A-Za-z0-9_-]+)$/);
-    if (responseApiMatch && req.method === "GET") return getResponseRequest(res, responseApiMatch[1]);
+    const responseApiMatch = pathname.match(
+      /^\/api\/respond\/([A-Za-z0-9_-]+)$/,
+    );
+    if (responseApiMatch && req.method === "GET")
+      return getResponseRequest(res, responseApiMatch[1]);
     if (responseApiMatch && req.method === "POST") {
       return await answerRequest(req, res, responseApiMatch[1]);
     }
-    const responsePhotoMatch = pathname.match(/^\/api\/respond\/([A-Za-z0-9_-]+)\/photo$/);
+    const responsePhotoMatch = pathname.match(
+      /^\/api\/respond\/([A-Za-z0-9_-]+)\/photo$/,
+    );
     if (responsePhotoMatch && req.method === "POST") {
       return await uploadResponsePhoto(req, res, responsePhotoMatch[1]);
     }

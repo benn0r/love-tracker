@@ -42,16 +42,19 @@ test.beforeAll(async () => {
     readFile(new URL("./fixtures/web-push-key.pem", import.meta.url)),
     readFile(new URL("./fixtures/web-push-cert.pem", import.meta.url)),
   ]);
-  mockWebPush = createHttpsServer({ key: pushKey, cert: pushCert }, async (req, res) => {
-    const chunks = [];
-    for await (const chunk of req) chunks.push(chunk);
-    const delivery = { headers: req.headers, body: Buffer.concat(chunks) };
-    const waiter = pushWaiters.shift();
-    if (waiter) waiter(delivery);
-    else pushDeliveries.push(delivery);
-    res.writeHead(201);
-    res.end();
-  });
+  mockWebPush = createHttpsServer(
+    { key: pushKey, cert: pushCert },
+    async (req, res) => {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const delivery = { headers: req.headers, body: Buffer.concat(chunks) };
+      const waiter = pushWaiters.shift();
+      if (waiter) waiter(delivery);
+      else pushDeliveries.push(delivery);
+      res.writeHead(201);
+      res.end();
+    },
+  );
   await listen(mockWebPush);
   pushEndpoint = `https://localhost:${mockWebPush.address().port}/push`;
   const vapidKeys = webpush.generateVAPIDKeys();
@@ -77,7 +80,9 @@ test.beforeAll(async () => {
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
-  app.stderr.on("data", (chunk) => { serverError += chunk.toString(); });
+  app.stderr.on("data", (chunk) => {
+    serverError += chunk.toString();
+  });
   await waitForApp();
 });
 
@@ -98,7 +103,9 @@ test.afterAll(async () => {
   if (dataDir) await rm(dataDir, { recursive: true, force: true });
 });
 
-test("complete browser journey with shared locations", async ({ browser }, testInfo) => {
+test("complete browser journey with shared locations", async ({
+  browser,
+}, testInfo) => {
   const requesterLocation = { latitude: 51.5072, longitude: -0.1276 };
   const responderLocation = { latitude: 48.8566, longitude: 2.3522 };
   const requester = await browser.newContext({
@@ -129,13 +136,19 @@ test("complete browser journey with shared locations", async ({ browser }, testI
     await expect(page.locator("#waiting-view")).toBeVisible();
     await expect(page.locator("#enable-push")).toBeVisible();
     await page.locator("#enable-push").click();
-    await expect(page.locator("#push-status")).toContainText("You’ll get a notification");
+    await expect(page.locator("#push-status")).toContainText(
+      "You’ll get a notification",
+    );
     await expect(page.locator("#waiting-phrase")).not.toBeEmpty();
     const pushStatusBox = await page.locator("#push-status").boundingBox();
-    const waitingPhraseBox = await page.locator("#waiting-phrase").boundingBox();
+    const waitingPhraseBox = await page
+      .locator("#waiting-phrase")
+      .boundingBox();
     expect(pushStatusBox).not.toBeNull();
     expect(waitingPhraseBox).not.toBeNull();
-    expect(waitingPhraseBox.y - (pushStatusBox.y + pushStatusBox.height)).toBeGreaterThanOrEqual(12);
+    expect(
+      waitingPhraseBox.y - (pushStatusBox.y + pushStatusBox.height),
+    ).toBeGreaterThanOrEqual(12);
     await attachScreenshot(page, testInfo, "with-location-waiting");
 
     const notification = await notificationPromise;
@@ -155,13 +168,20 @@ test("complete browser journey with shared locations", async ({ browser }, testI
     expect(delivery.headers.urgency).toBe("high");
 
     await expect(page.locator("#result-view")).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator("#result-number")).toHaveText("875", { timeout: 6_000 });
+    await expect(page.locator("#result-number")).toHaveText("875", {
+      timeout: 6_000,
+    });
     await expect(page.locator("#love-map")).toBeVisible();
-    await expect(page.locator(".progress-track")).toHaveAttribute("aria-valuenow", "100");
+    await expect(page.locator(".progress-track")).toHaveAttribute(
+      "aria-valuenow",
+      "100",
+    );
     await attachScreenshot(page, testInfo, "with-location-result");
 
     const requestId = new URL(page.url()).pathname.split("/").pop();
-    const result = await (await requester.request.get(`/api/requests/${requestId}`)).json();
+    const result = await (
+      await requester.request.get(`/api/requests/${requestId}`)
+    ).json();
     expect(result.journey).toEqual({
       from: { latitude: 48.86, longitude: 2.35 },
       to: { latitude: 51.51, longitude: -0.13 },
@@ -186,10 +206,18 @@ test("complete browser journey with shared locations", async ({ browser }, testI
   }
 });
 
-test("complete browser journey without locations", async ({ browser }, testInfo) => {
+test("complete browser journey without locations", async ({
+  browser,
+}, testInfo) => {
   const deliveriesBefore = pushDeliveries.length;
-  const requester = await browser.newContext({ baseURL: baseUrl, locale: "en-US" });
-  const responder = await browser.newContext({ baseURL: baseUrl, locale: "en-US" });
+  const requester = await browser.newContext({
+    baseURL: baseUrl,
+    locale: "en-US",
+  });
+  const responder = await browser.newContext({
+    baseURL: baseUrl,
+    locale: "en-US",
+  });
 
   try {
     const page = await requester.newPage();
@@ -213,12 +241,16 @@ test("complete browser journey without locations", async ({ browser }, testInfo)
     await expect(answerPage.locator("#sent-view")).toBeVisible();
 
     await expect(page.locator("#result-view")).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator("#result-number")).toHaveText("100", { timeout: 6_000 });
+    await expect(page.locator("#result-number")).toHaveText("100", {
+      timeout: 6_000,
+    });
     await expect(page.locator("#love-map")).toBeHidden();
     await attachScreenshot(page, testInfo, "without-location-result");
 
     const requestId = new URL(page.url()).pathname.split("/").pop();
-    const result = await (await requester.request.get(`/api/requests/${requestId}`)).json();
+    const result = await (
+      await requester.request.get(`/api/requests/${requestId}`)
+    ).json();
     expect(result.journey).toBeNull();
     expect(pushDeliveries.length).toBe(deliveriesBefore);
   } finally {
@@ -247,7 +279,10 @@ function assertNotification(notification, name) {
 function nextNotification() {
   if (notifications.length) return Promise.resolve(notifications.shift());
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("Mock notification was not received")), 10_000);
+    const timeout = setTimeout(
+      () => reject(new Error("Mock notification was not received")),
+      10_000,
+    );
     notificationWaiters.push((notification) => {
       clearTimeout(timeout);
       resolve(notification);
@@ -258,7 +293,10 @@ function nextNotification() {
 function nextPushDelivery() {
   if (pushDeliveries.length) return Promise.resolve(pushDeliveries.shift());
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error("Web Push delivery was not received")), 10_000);
+    const timeout = setTimeout(
+      () => reject(new Error("Web Push delivery was not received")),
+      10_000,
+    );
     pushWaiters.push((delivery) => {
       clearTimeout(timeout);
       resolve(delivery);
@@ -280,7 +318,10 @@ async function installPushMock(page) {
   await page.addInitScript((mockSubscription) => {
     class MockNotification {
       static permission = "default";
-      static async requestPermission() { this.permission = "granted"; return "granted"; }
+      static async requestPermission() {
+        this.permission = "granted";
+        return "granted";
+      }
     }
     const registration = {
       pushManager: {
@@ -288,11 +329,20 @@ async function installPushMock(page) {
         subscribe: async () => ({ toJSON: () => mockSubscription }),
       },
     };
-    Object.defineProperty(window, "Notification", { configurable: true, value: MockNotification });
-    Object.defineProperty(window, "PushManager", { configurable: true, value: class PushManager {} });
+    Object.defineProperty(window, "Notification", {
+      configurable: true,
+      value: MockNotification,
+    });
+    Object.defineProperty(window, "PushManager", {
+      configurable: true,
+      value: class PushManager {},
+    });
     Object.defineProperty(navigator, "serviceWorker", {
       configurable: true,
-      value: { register: async () => registration, ready: Promise.resolve(registration) },
+      value: {
+        register: async () => registration,
+        ready: Promise.resolve(registration),
+      },
     });
   }, subscription);
 }
@@ -311,7 +361,10 @@ async function availablePort() {
 
 function waitForApp() {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error(`E2E app did not start: ${serverError}`)), 5000);
+    const timeout = setTimeout(
+      () => reject(new Error(`E2E app did not start: ${serverError}`)),
+      5000,
+    );
     app.stdout.on("data", (chunk) => {
       if (!chunk.toString().includes("listening")) return;
       clearTimeout(timeout);

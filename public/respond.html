@@ -11,9 +11,15 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
     <link rel="stylesheet" href="/styles.css?v=__APP_VERSION__" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      defer
+    ></script>
     <script src="/i18n.js?v=__APP_VERSION__" defer></script>
     <script src="/respond.js?v=__APP_VERSION__" defer></script>
   </head>
@@ -21,50 +27,139 @@
     <main class="shell">
       <section class="card response-card" aria-live="polite">
         <div class="seal" aria-hidden="true">
-          <svg viewBox="0 0 80 80"><path d="M40 64S15 50 15 31c0-14 18-19 25-7 7-12 25-7 25 7 0 19-25 33-25 33Z"/></svg>
+          <svg viewBox="0 0 80 80">
+            <path
+              d="M40 64S15 50 15 31c0-14 18-19 25-7 7-12 25-7 25 7 0 19-25 33-25 33Z"
+            />
+          </svg>
         </div>
         <div id="response-form-view">
-          <p class="eyebrow" data-i18n="respond.eyebrow">A private note, just for you</p>
-          <h1 id="response-title">How much do you<br />love <em id="person-name">her</em>?</h1>
-          <p class="intro" data-i18n="respond.intro">Choose any number from a gentle 0% to an absolutely impossible 1000%.</p>
-          <p id="ip-verification-status" class="ip-verification-status hidden"></p>
-          <section id="request-location-map" class="love-map answer-location-map hidden" aria-label="The requester's approximate location" data-i18n-aria-label="respond.locationMap">
-            <p class="map-kicker" data-i18n="respond.mapKicker">A question from the heart</p>
-            <p id="request-location-title" class="sr-only" data-i18n="respond.locationMap">The requester's approximate location</p>
-            <div id="request-real-map" class="real-map" role="img" aria-labelledby="request-location-title"></div>
+          <p class="eyebrow" data-i18n="respond.eyebrow">
+            A private note, just for you
+          </p>
+          <h1 id="response-title">
+            How much do you<br />love <em id="person-name">her</em>?
+          </h1>
+          <p class="intro" data-i18n="respond.intro">
+            Choose any number from a gentle 0% to an absolutely impossible
+            1000%.
+          </p>
+          <p
+            id="ip-verification-status"
+            class="ip-verification-status hidden"
+          ></p>
+          <section
+            id="request-location-map"
+            class="love-map answer-location-map hidden"
+            aria-label="The requester's approximate location"
+            data-i18n-aria-label="respond.locationMap"
+          >
+            <p class="map-kicker" data-i18n="respond.mapKicker">
+              A question from the heart
+            </p>
+            <p
+              id="request-location-title"
+              class="sr-only"
+              data-i18n="respond.locationMap"
+            >
+              The requester's approximate location
+            </p>
+            <div
+              id="request-real-map"
+              class="real-map"
+              role="img"
+              aria-labelledby="request-location-title"
+            ></div>
             <p id="request-location-caption" class="map-caption"></p>
           </section>
           <form id="response-form">
             <label for="value" data-i18n="respond.answer">Your answer</label>
             <div class="number-wrap">
-              <input id="value" name="value" type="number" min="0" max="1000" step="1" inputmode="numeric" value="100" required />
+              <input
+                id="value"
+                name="value"
+                type="number"
+                min="0"
+                max="1000"
+                step="1"
+                inputmode="numeric"
+                value="100"
+                required
+              />
               <span>%</span>
             </div>
-            <input id="love-range" class="love-range" type="range" min="0" max="1000" value="100" aria-label="Love percentage" data-i18n-aria-label="respond.percentage" />
+            <input
+              id="love-range"
+              class="love-range"
+              type="range"
+              min="0"
+              max="1000"
+              value="100"
+              aria-label="Love percentage"
+              data-i18n-aria-label="respond.percentage"
+            />
             <div class="range-labels"><span>0%</span><span>1000%</span></div>
             <div class="photo-picker">
               <label for="love-photo-input">
                 <span class="camera-icon" aria-hidden="true">⌁</span>
-                <span><strong data-i18n="respond.photoTitle">Add a photo for her</strong><span data-i18n="respond.photoCopy">Take one now or choose from your library</span></span>
+                <span
+                  ><strong data-i18n="respond.photoTitle"
+                    >Add a photo for her</strong
+                  ><span data-i18n="respond.photoCopy"
+                    >Take one now or choose from your library</span
+                  ></span
+                >
               </label>
-              <input id="love-photo-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
+              <input
+                id="love-photo-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+              />
               <div id="photo-preview-wrap" class="photo-preview-wrap hidden">
-                <img id="photo-preview" alt="Selected photo preview" data-i18n-alt="respond.photoAlt" />
-                <button id="remove-photo" class="remove-photo" type="button" data-i18n="respond.photoRemove">Remove photo</button>
+                <img
+                  id="photo-preview"
+                  alt="Selected photo preview"
+                  data-i18n-alt="respond.photoAlt"
+                />
+                <button
+                  id="remove-photo"
+                  class="remove-photo"
+                  type="button"
+                  data-i18n="respond.photoRemove"
+                >
+                  Remove photo
+                </button>
               </div>
             </div>
-            <button type="submit"><span data-button-label data-i18n="respond.send">Send my answer</span> <span>♥</span></button>
+            <button type="submit">
+              <span data-button-label data-i18n="respond.send"
+                >Send my answer</span
+              >
+              <span>♥</span>
+            </button>
             <p class="form-error" id="response-error" role="alert"></p>
           </form>
         </div>
         <div id="sent-view" class="hidden">
           <p class="eyebrow" data-i18n="sent.eyebrow">Delivered with love</p>
-          <h1 data-i18n-html="sent.title">Your answer is<br /><em>on its way.</em></h1>
+          <h1 data-i18n-html="sent.title">
+            Your answer is<br /><em>on its way.</em>
+          </h1>
           <div class="sent-heart">♥</div>
-          <p id="sent-copy" class="intro"><span id="sent-name"></span> can see it now. You may close this page.</p>
+          <p id="sent-copy" class="intro">
+            <span id="sent-name"></span> can see it now. You may close this
+            page.
+          </p>
         </div>
       </section>
-      <p class="signature"><span data-i18n-html="footer">made with <span>♥</span> for __LOVE_NAME__</span> <span class="version-separator">·</span> <span class="deployment-version">v__APP_VERSION__</span></p>
+      <p class="signature">
+        <span data-i18n-html="footer"
+          >made with <span>♥</span> for __LOVE_NAME__</span
+        >
+        <span class="version-separator">·</span>
+        <span class="deployment-version">v__APP_VERSION__</span>
+      </p>
     </main>
   </body>
 </html>

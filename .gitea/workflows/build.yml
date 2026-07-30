@@ -19,11 +19,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Validate source
-        run: |
-          node --check server.js
-          node --check test/server.test.js
-          node --check test/e2e.test.js
+      - name: Install quality dependencies
+        run: npm ci
+
+      - name: Lint source
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Build application
+        run: npm run build
 
       - name: Package immutable build context
         run: |
@@ -76,7 +82,7 @@ jobs:
   test-e2e:
     needs: build
     runs-on: ubuntu-latest-slim
-    container: mcr.microsoft.com/playwright:v1.61.0-noble
+    container: mcr.microsoft.com/playwright:v1.62.0-noble
     timeout-minutes: 15
 
     steps:

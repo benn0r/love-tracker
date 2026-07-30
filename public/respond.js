@@ -35,7 +35,9 @@ async function loadRequest() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
     personName = data.name;
-    document.querySelector("#response-title").innerHTML = t("respond.title", { name: escapeHtml(data.name) });
+    document.querySelector("#response-title").innerHTML = t("respond.title", {
+      name: escapeHtml(data.name),
+    });
     document.querySelector("#sent-name").textContent = data.name;
     if (data.requesterLocation || data.ipLocation) {
       showRequesterLocation(data.name, data.requesterLocation, data.ipLocation);
@@ -55,12 +57,20 @@ async function loadRequest() {
 
 function showRequesterLocation(name, sharedLocation, ipLocation) {
   const mapSection = document.querySelector("#request-location-map");
-  document.querySelector("#request-location-title").textContent = t("respond.approxLocation", { name });
+  document.querySelector("#request-location-title").textContent = t(
+    "respond.approxLocation",
+    { name },
+  );
   const place = ipLocation
-    ? [ipLocation.city, ipLocation.region, ipLocation.country].filter(Boolean).join(", ")
+    ? [ipLocation.city, ipLocation.region, ipLocation.country]
+        .filter(Boolean)
+        .join(", ")
     : "";
   document.querySelector("#request-location-caption").textContent = place
-    ? t(sharedLocation ? "respond.ipCaptionShared" : "respond.ipCaptionPrivate", { place })
+    ? t(
+        sharedLocation ? "respond.ipCaptionShared" : "respond.ipCaptionPrivate",
+        { place },
+      )
     : t("respond.sharedCaption", { name });
   mapSection.classList.remove("hidden");
 
@@ -76,7 +86,8 @@ function showRequesterLocation(name, sharedLocation, ipLocation) {
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
 
     const ipIcon = L.divIcon({
@@ -88,14 +99,22 @@ function showRequesterLocation(name, sharedLocation, ipLocation) {
 
     L.marker(coordinates, { icon: ipIcon })
       .addTo(map)
-      .bindTooltip(ipLocation ? t("respond.ipEstimate") : t("respond.sharedLocation", { name }), {
-        permanent: true,
-        direction: "bottom",
-        offset: [0, 12],
-      });
+      .bindTooltip(
+        ipLocation
+          ? t("respond.ipEstimate")
+          : t("respond.sharedLocation", { name }),
+        {
+          permanent: true,
+          direction: "bottom",
+          offset: [0, 12],
+        },
+      );
 
     if (sharedLocation && ipLocation) {
-      const sharedCoordinates = [sharedLocation.latitude, sharedLocation.longitude];
+      const sharedCoordinates = [
+        sharedLocation.latitude,
+        sharedLocation.longitude,
+      ];
       const sharedIcon = L.divIcon({
         className: "love-map-marker",
         html: '<span class="marker-core">♥</span>',
@@ -109,7 +128,10 @@ function showRequesterLocation(name, sharedLocation, ipLocation) {
           direction: "bottom",
           offset: [0, 12],
         });
-      map.fitBounds([coordinates, sharedCoordinates], { padding: [55, 55], maxZoom: 11 });
+      map.fitBounds([coordinates, sharedCoordinates], {
+        padding: [55, 55],
+        maxZoom: 11,
+      });
     }
   });
 }
@@ -123,7 +145,9 @@ form.addEventListener("submit", async (event) => {
   try {
     buttonLabel.textContent = t("ask.finding");
     const location = await getApproximateLocation();
-    buttonLabel.textContent = selectedPhoto ? t("respond.preparing") : t("respond.sending");
+    buttonLabel.textContent = selectedPhoto
+      ? t("respond.preparing")
+      : t("respond.sending");
     const photo = selectedPhoto ? await compressPhoto(selectedPhoto) : null;
     if (photo) {
       buttonLabel.textContent = t("respond.uploading");
@@ -155,7 +179,8 @@ form.addEventListener("submit", async (event) => {
 });
 
 function clearPhoto() {
-  if (photoPreview.src.startsWith("blob:")) URL.revokeObjectURL(photoPreview.src);
+  if (photoPreview.src.startsWith("blob:"))
+    URL.revokeObjectURL(photoPreview.src);
   selectedPhoto = null;
   photoInput.value = "";
   photoPreview.removeAttribute("src");
@@ -164,19 +189,29 @@ function clearPhoto() {
 
 function compressPhoto(file) {
   return new Promise((resolve, reject) => {
-    if (file.size > 12_000_000) return reject(new Error(t("respond.photoSize")));
+    if (file.size > 12_000_000)
+      return reject(new Error(t("respond.photoSize")));
     const image = new Image();
     const objectUrl = URL.createObjectURL(file);
     image.onload = () => {
       const maxDimension = 1000;
-      const scale = Math.min(maxDimension / image.width, maxDimension / image.height, 1);
+      const scale = Math.min(
+        maxDimension / image.width,
+        maxDimension / image.height,
+        1,
+      );
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(image.width * scale));
       canvas.height = Math.max(1, Math.round(image.height * scale));
-      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas
+        .getContext("2d")
+        .drawImage(image, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(objectUrl);
       canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new Error(t("respond.photoPrepareError"))),
+        (blob) =>
+          blob
+            ? resolve(blob)
+            : reject(new Error(t("respond.photoPrepareError"))),
         "image/jpeg",
         0.72,
       );
@@ -193,10 +228,11 @@ function getApproximateLocation() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null);
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve({
-        latitude: Math.round(coords.latitude * 100) / 100,
-        longitude: Math.round(coords.longitude * 100) / 100,
-      }),
+      ({ coords }) =>
+        resolve({
+          latitude: Math.round(coords.latitude * 100) / 100,
+          longitude: Math.round(coords.longitude * 100) / 100,
+        }),
       () => resolve(null),
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
     );

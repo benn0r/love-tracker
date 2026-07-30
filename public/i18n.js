@@ -3,31 +3,37 @@
     en: {
       "meta.title.main": "Love Tracker — How much are you loved?",
       "meta.title.respond": "A love question for you",
-      "meta.description": "Send a tiny love note and discover just how loved you are.",
-      "brand": "Love <em>Tracker</em>",
-      "ask.intro": "<span class=\"intro-question\">How much are you loved?</span> Tell me your name and I’ll send the question straight to his heart.",
+      "meta.description":
+        "Send a tiny love note and discover just how loved you are.",
+      brand: "Love <em>Tracker</em>",
+      "ask.intro":
+        '<span class="intro-question">How much are you loved?</span> Tell me your name and I’ll send the question straight to his heart.',
       "ask.name": "Your name",
       "ask.placeholder": "e.g. {loveName}",
       "ask.journey.title": "Show our love journey",
-      "ask.journey.copy": "Share my approximate location for an animated love journey",
+      "ask.journey.copy":
+        "Share my approximate location for an animated love journey",
       "ask.button": "Ask",
       "ask.sending": "Sending…",
       "ask.finding": "Finding your place…",
       "ask.error": "Something went wrong. Please try again.",
       "request.expiredEyebrow": "This love note has faded",
       "request.expiredTitle": "Request expired.",
-      "request.expiredCopy": "This request is no longer available. Start a new one from the home screen.",
+      "request.expiredCopy":
+        "This request is no longer available. Start a new one from the home screen.",
       "request.new": "Start a new request",
       "request.restoring": "Opening your love note…",
       "waiting.eyebrow": "Your note is on its way",
       "waiting.title": "Waiting for<br><em>an answer…</em>",
-      "waiting.copy": "{name}, keep this page open. The answer will bloom right here.",
+      "waiting.copy":
+        "{name}, keep this page open. The answer will bloom right here.",
       "waiting.label": "Waiting",
       "push.enable": "Notify me when the answer arrives",
       "push.enabling": "Turning on notifications…",
       "push.enabled": "You’ll get a notification when your answer is ready ♥",
       "push.ready": "Notifications are available on this device.",
-      "push.denied": "Notifications were not allowed. You can keep this page open instead.",
+      "push.denied":
+        "Notifications were not allowed. You can keep this page open instead.",
       "push.error": "Notifications could not be enabled.",
       waitingPhrases: [
         "A little question is finding its way to a big heart.",
@@ -49,7 +55,8 @@
       "result.photoRetry": "Try loading the photo again",
       "result.journey": "Your love journey",
       "result.journeyTitle": "Love travelling between two hearts",
-      "result.journeyDynamic": "Love travelling {direction} from his heart to {name}",
+      "result.journeyDynamic":
+        "Love travelling {direction} from his heart to {name}",
       "result.mapCaption": "From his heart to yours.",
       "result.origin": "His heart",
       "result.again": "Ask again",
@@ -59,7 +66,8 @@
       "direction.south-west": "south-west",
       "respond.eyebrow": "A private note, just for you",
       "respond.title": "How much do you<br>love <em>{name}</em>?",
-      "respond.intro": "Choose any number from a gentle 0% to an absolutely impossible 1000%.",
+      "respond.intro":
+        "Choose any number from a gentle 0% to an absolutely impossible 1000%.",
       "respond.locationMap": "The requester's approximate location",
       "respond.mapKicker": "A question from the heart",
       "respond.answer": "Your answer",
@@ -77,62 +85,150 @@
       "respond.photoSize": "Please choose a photo smaller than 12 MB.",
       "respond.photoPrepareError": "That photo could not be prepared.",
       "respond.photoOpenError": "That photo could not be opened.",
-      "respond.locationUnavailable": "IP-based location was unavailable for this request. If this question was created before location verification was added, ask for a new link.",
+      "respond.locationUnavailable":
+        "IP-based location was unavailable for this request. If this question was created before location verification was added, ask for a new link.",
       "respond.expiredEyebrow": "This note has faded",
       "respond.expiredTitle": "Link expired.",
       "respond.approxLocation": "{name}'s approximate location",
       "respond.ipEstimate": "IP estimate",
       "respond.sharedLocation": "{name}'s shared location",
-      "respond.ipCaptionShared": "IP estimate: {place}. The second heart is the location they chose to share.",
-      "respond.ipCaptionPrivate": "IP estimate: {place}. The raw IP address is not shown or stored.",
+      "respond.ipCaptionShared":
+        "IP estimate: {place}. The second heart is the location they chose to share.",
+      "respond.ipCaptionPrivate":
+        "IP estimate: {place}. The raw IP address is not shown or stored.",
       "respond.sharedCaption": "{name}'s shared approximate location.",
       "sent.eyebrow": "Delivered with love",
       "sent.title": "Your answer is<br><em>on its way.</em>",
       "sent.copy": "{name} can see it now. You may close this page.",
-      "sent.copyPhoto": "{name} can see your answer and photo now. You may close this page.",
-      "footer": "made with <span>♥</span> for {loveName}",
+      "sent.copyPhoto":
+        "{name} can see your answer and photo now. You may close this page.",
+      footer: "made with <span>♥</span> for {loveName}",
       resultMessages: [
-        [0, ["An honest answer is its own kind of tenderness.", "Some feelings need time before they find their number.", "Zero is only where this little meter starts."]],
-        [24, ["A tiny spark is still a spark.", "Love sometimes whispers before it learns to sing.", "The heart has cracked the door open."]],
-        [49, ["Something sweet is definitely blooming here.", "The heart is warming up beautifully.", "The butterflies are starting to organize."]],
-        [74, ["That’s the kind of number that comes with butterflies.", "The heart is officially doing happy little somersaults.", "That number deserves a long hug."]],
-        [99, ["So close to overflowing, the heart can barely contain it.", "The love meter is blushing.", "Love has filled nearly every corner."]],
-        [100, ["A whole heart, beautifully and completely given.", "Every last percent belongs to you.", "Perfectly, wonderfully, entirely loved."]],
-        [199, ["The meter ended at 100, but the heart clearly didn’t.", "Some feelings refuse to respect sensible limits.", "This answer comes with bonus butterflies."]],
-        [399, ["That’s enough love for several parallel universes.", "Warning: excessive affection detected.", "The calculator blushed and gave up."]],
-        [699, ["That’s not a percentage. That’s a whole galaxy.", "The heart has achieved escape velocity.", "This feeling has its own gravitational pull."]],
-        [999, ["The universe called. It wants some of that love back.", "That number is basically a handwritten infinity.", "Love this big needs its own postal code."]],
-        [1000, ["One thousand percent. The heart has said everything.", "Maximum number, immeasurable feeling.", "The scale stops here. The love clearly doesn’t."]],
+        [
+          0,
+          [
+            "An honest answer is its own kind of tenderness.",
+            "Some feelings need time before they find their number.",
+            "Zero is only where this little meter starts.",
+          ],
+        ],
+        [
+          24,
+          [
+            "A tiny spark is still a spark.",
+            "Love sometimes whispers before it learns to sing.",
+            "The heart has cracked the door open.",
+          ],
+        ],
+        [
+          49,
+          [
+            "Something sweet is definitely blooming here.",
+            "The heart is warming up beautifully.",
+            "The butterflies are starting to organize.",
+          ],
+        ],
+        [
+          74,
+          [
+            "That’s the kind of number that comes with butterflies.",
+            "The heart is officially doing happy little somersaults.",
+            "That number deserves a long hug.",
+          ],
+        ],
+        [
+          99,
+          [
+            "So close to overflowing, the heart can barely contain it.",
+            "The love meter is blushing.",
+            "Love has filled nearly every corner.",
+          ],
+        ],
+        [
+          100,
+          [
+            "A whole heart, beautifully and completely given.",
+            "Every last percent belongs to you.",
+            "Perfectly, wonderfully, entirely loved.",
+          ],
+        ],
+        [
+          199,
+          [
+            "The meter ended at 100, but the heart clearly didn’t.",
+            "Some feelings refuse to respect sensible limits.",
+            "This answer comes with bonus butterflies.",
+          ],
+        ],
+        [
+          399,
+          [
+            "That’s enough love for several parallel universes.",
+            "Warning: excessive affection detected.",
+            "The calculator blushed and gave up.",
+          ],
+        ],
+        [
+          699,
+          [
+            "That’s not a percentage. That’s a whole galaxy.",
+            "The heart has achieved escape velocity.",
+            "This feeling has its own gravitational pull.",
+          ],
+        ],
+        [
+          999,
+          [
+            "The universe called. It wants some of that love back.",
+            "That number is basically a handwritten infinity.",
+            "Love this big needs its own postal code.",
+          ],
+        ],
+        [
+          1000,
+          [
+            "One thousand percent. The heart has said everything.",
+            "Maximum number, immeasurable feeling.",
+            "The scale stops here. The love clearly doesn’t.",
+          ],
+        ],
       ],
     },
     de: {
       "meta.title.main": "Love Tracker — Wie sehr wirst du geliebt?",
       "meta.title.respond": "Eine Liebesfrage für dich",
-      "meta.description": "Schicke eine kleine Liebesnachricht und entdecke, wie sehr du geliebt wirst.",
-      "brand": "Love <em>Tracker</em>",
-      "ask.intro": "<span class=\"intro-question\">Wie sehr wirst du geliebt?</span> Sag mir deinen Namen und ich schicke die Frage direkt an sein Herz.",
+      "meta.description":
+        "Schicke eine kleine Liebesnachricht und entdecke, wie sehr du geliebt wirst.",
+      brand: "Love <em>Tracker</em>",
+      "ask.intro":
+        '<span class="intro-question">Wie sehr wirst du geliebt?</span> Sag mir deinen Namen und ich schicke die Frage direkt an sein Herz.',
       "ask.name": "Dein Name",
       "ask.placeholder": "z. B. {loveName}",
       "ask.journey.title": "Zeige unsere Liebesreise",
-      "ask.journey.copy": "Teile meinen ungefähren Standort für eine animierte Liebesreise",
+      "ask.journey.copy":
+        "Teile meinen ungefähren Standort für eine animierte Liebesreise",
       "ask.button": "Fragen",
       "ask.sending": "Wird gesendet…",
       "ask.finding": "Dein Ort wird gesucht…",
       "ask.error": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
       "request.expiredEyebrow": "Diese Liebesnachricht ist verblasst",
       "request.expiredTitle": "Anfrage abgelaufen.",
-      "request.expiredCopy": "Diese Anfrage ist nicht mehr verfügbar. Starte auf der Startseite eine neue.",
+      "request.expiredCopy":
+        "Diese Anfrage ist nicht mehr verfügbar. Starte auf der Startseite eine neue.",
       "request.new": "Neue Anfrage starten",
       "request.restoring": "Deine Liebesnachricht wird geöffnet…",
       "waiting.eyebrow": "Deine Nachricht ist unterwegs",
       "waiting.title": "Warten auf<br><em>eine Antwort…</em>",
-      "waiting.copy": "{name}, lass diese Seite geöffnet. Die Antwort erblüht genau hier.",
+      "waiting.copy":
+        "{name}, lass diese Seite geöffnet. Die Antwort erblüht genau hier.",
       "waiting.label": "Warten",
       "push.enable": "Benachrichtige mich, wenn die Antwort da ist",
       "push.enabling": "Benachrichtigungen werden aktiviert…",
-      "push.enabled": "Du erhältst eine Nachricht, sobald deine Antwort da ist ♥",
+      "push.enabled":
+        "Du erhältst eine Nachricht, sobald deine Antwort da ist ♥",
       "push.ready": "Benachrichtigungen sind auf diesem Gerät verfügbar.",
-      "push.denied": "Benachrichtigungen wurden nicht erlaubt. Du kannst diese Seite stattdessen geöffnet lassen.",
+      "push.denied":
+        "Benachrichtigungen wurden nicht erlaubt. Du kannst diese Seite stattdessen geöffnet lassen.",
       "push.error": "Benachrichtigungen konnten nicht aktiviert werden.",
       waitingPhrases: [
         "Eine kleine Frage findet gerade ihren Weg zu einem großen Herzen.",
@@ -154,7 +250,8 @@
       "result.photoRetry": "Foto erneut laden",
       "result.journey": "Eure Liebesreise",
       "result.journeyTitle": "Liebe reist zwischen zwei Herzen",
-      "result.journeyDynamic": "Liebe reist nach {direction} von seinem Herzen zu {name}",
+      "result.journeyDynamic":
+        "Liebe reist nach {direction} von seinem Herzen zu {name}",
       "result.mapCaption": "Von seinem Herzen zu deinem.",
       "result.origin": "Sein Herz",
       "result.again": "Noch einmal fragen",
@@ -164,13 +261,15 @@
       "direction.south-west": "Südwesten",
       "respond.eyebrow": "Eine private Nachricht, nur für dich",
       "respond.title": "Wie sehr liebst du<br><em>{name}</em>?",
-      "respond.intro": "Wähle eine beliebige Zahl von sanften 0 % bis zu völlig unmöglichen 1000 %.",
+      "respond.intro":
+        "Wähle eine beliebige Zahl von sanften 0 % bis zu völlig unmöglichen 1000 %.",
       "respond.locationMap": "Ungefährer Standort der anfragenden Person",
       "respond.mapKicker": "Eine Frage von Herzen",
       "respond.answer": "Deine Antwort",
       "respond.percentage": "Liebesprozent",
       "respond.photoTitle": "Füge ein Foto für sie hinzu",
-      "respond.photoCopy": "Mach jetzt eins oder wähle eines aus deiner Mediathek",
+      "respond.photoCopy":
+        "Mach jetzt eins oder wähle eines aus deiner Mediathek",
       "respond.photoAlt": "Vorschau des ausgewählten Fotos",
       "respond.photoRemove": "Foto entfernen",
       "respond.send": "Meine Antwort senden",
@@ -182,62 +281,151 @@
       "respond.photoSize": "Bitte wähle ein Foto unter 12 MB.",
       "respond.photoPrepareError": "Das Foto konnte nicht vorbereitet werden.",
       "respond.photoOpenError": "Das Foto konnte nicht geöffnet werden.",
-      "respond.locationUnavailable": "Für diese Anfrage war kein IP-basierter Standort verfügbar. Falls der Link vor der Standortprüfung erstellt wurde, bitte um einen neuen Link.",
+      "respond.locationUnavailable":
+        "Für diese Anfrage war kein IP-basierter Standort verfügbar. Falls der Link vor der Standortprüfung erstellt wurde, bitte um einen neuen Link.",
       "respond.expiredEyebrow": "Diese Nachricht ist verblasst",
       "respond.expiredTitle": "Link abgelaufen.",
       "respond.approxLocation": "Ungefährer Standort von {name}",
       "respond.ipEstimate": "IP-Schätzung",
       "respond.sharedLocation": "Geteilter Standort von {name}",
-      "respond.ipCaptionShared": "IP-Schätzung: {place}. Das zweite Herz zeigt den freiwillig geteilten Standort.",
-      "respond.ipCaptionPrivate": "IP-Schätzung: {place}. Die IP-Adresse wird weder angezeigt noch gespeichert.",
+      "respond.ipCaptionShared":
+        "IP-Schätzung: {place}. Das zweite Herz zeigt den freiwillig geteilten Standort.",
+      "respond.ipCaptionPrivate":
+        "IP-Schätzung: {place}. Die IP-Adresse wird weder angezeigt noch gespeichert.",
       "respond.sharedCaption": "Ungefährer, geteilter Standort von {name}.",
       "sent.eyebrow": "Mit Liebe zugestellt",
       "sent.title": "Deine Antwort ist<br><em>unterwegs.</em>",
-      "sent.copy": "{name} kann sie jetzt sehen. Du kannst diese Seite schließen.",
-      "sent.copyPhoto": "{name} kann deine Antwort und dein Foto jetzt sehen. Du kannst diese Seite schließen.",
-      "footer": "mit <span>♥</span> für {loveName} gemacht",
+      "sent.copy":
+        "{name} kann sie jetzt sehen. Du kannst diese Seite schließen.",
+      "sent.copyPhoto":
+        "{name} kann deine Antwort und dein Foto jetzt sehen. Du kannst diese Seite schließen.",
+      footer: "mit <span>♥</span> für {loveName} gemacht",
       resultMessages: [
-        [0, ["Eine ehrliche Antwort ist ihre eigene Form von Zärtlichkeit.", "Manche Gefühle brauchen Zeit, bis sie ihre Zahl finden.", "Null ist nur der Anfang dieser kleinen Anzeige."]],
-        [24, ["Ein kleiner Funke ist immer noch ein Funke.", "Liebe flüstert manchmal, bevor sie singen lernt.", "Das Herz hat die Tür einen Spalt geöffnet."]],
-        [49, ["Hier beginnt ganz sicher etwas Süßes zu blühen.", "Das Herz wird wunderbar warm.", "Die Schmetterlinge sammeln sich schon."]],
-        [74, ["Das ist genau die Zahl, die Schmetterlinge mitbringt.", "Das Herz macht offiziell kleine Freudensprünge.", "Diese Zahl verdient eine lange Umarmung."]],
-        [99, ["Fast am Überlaufen – das Herz kann es kaum fassen.", "Die Liebesanzeige wird ganz rot.", "Liebe füllt beinahe jede Ecke."]],
-        [100, ["Ein ganzes Herz, wunderschön und vollständig verschenkt.", "Jedes einzelne Prozent gehört dir.", "Vollkommen, wunderbar, ganz und gar geliebt."]],
-        [199, ["Die Anzeige endet bei 100, das Herz offenbar nicht.", "Manche Gefühle halten sich nicht an vernünftige Grenzen.", "Diese Antwort bringt Extra-Schmetterlinge mit."]],
-        [399, ["Das ist genug Liebe für mehrere Paralleluniversen.", "Warnung: übermäßige Zuneigung erkannt.", "Der Taschenrechner wurde rot und gab auf."]],
-        [699, ["Das ist kein Prozentsatz. Das ist eine ganze Galaxie.", "Das Herz hat Fluchtgeschwindigkeit erreicht.", "Dieses Gefühl hat seine eigene Anziehungskraft."]],
-        [999, ["Das Universum möchte etwas von dieser Liebe zurück.", "Diese Zahl ist praktisch eine handgeschriebene Unendlichkeit.", "So große Liebe braucht eine eigene Postleitzahl."]],
-        [1000, ["Tausend Prozent. Das Herz hat alles gesagt.", "Höchste Zahl, unermessliches Gefühl.", "Die Skala endet hier. Die Liebe ganz klar nicht."]],
+        [
+          0,
+          [
+            "Eine ehrliche Antwort ist ihre eigene Form von Zärtlichkeit.",
+            "Manche Gefühle brauchen Zeit, bis sie ihre Zahl finden.",
+            "Null ist nur der Anfang dieser kleinen Anzeige.",
+          ],
+        ],
+        [
+          24,
+          [
+            "Ein kleiner Funke ist immer noch ein Funke.",
+            "Liebe flüstert manchmal, bevor sie singen lernt.",
+            "Das Herz hat die Tür einen Spalt geöffnet.",
+          ],
+        ],
+        [
+          49,
+          [
+            "Hier beginnt ganz sicher etwas Süßes zu blühen.",
+            "Das Herz wird wunderbar warm.",
+            "Die Schmetterlinge sammeln sich schon.",
+          ],
+        ],
+        [
+          74,
+          [
+            "Das ist genau die Zahl, die Schmetterlinge mitbringt.",
+            "Das Herz macht offiziell kleine Freudensprünge.",
+            "Diese Zahl verdient eine lange Umarmung.",
+          ],
+        ],
+        [
+          99,
+          [
+            "Fast am Überlaufen – das Herz kann es kaum fassen.",
+            "Die Liebesanzeige wird ganz rot.",
+            "Liebe füllt beinahe jede Ecke.",
+          ],
+        ],
+        [
+          100,
+          [
+            "Ein ganzes Herz, wunderschön und vollständig verschenkt.",
+            "Jedes einzelne Prozent gehört dir.",
+            "Vollkommen, wunderbar, ganz und gar geliebt.",
+          ],
+        ],
+        [
+          199,
+          [
+            "Die Anzeige endet bei 100, das Herz offenbar nicht.",
+            "Manche Gefühle halten sich nicht an vernünftige Grenzen.",
+            "Diese Antwort bringt Extra-Schmetterlinge mit.",
+          ],
+        ],
+        [
+          399,
+          [
+            "Das ist genug Liebe für mehrere Paralleluniversen.",
+            "Warnung: übermäßige Zuneigung erkannt.",
+            "Der Taschenrechner wurde rot und gab auf.",
+          ],
+        ],
+        [
+          699,
+          [
+            "Das ist kein Prozentsatz. Das ist eine ganze Galaxie.",
+            "Das Herz hat Fluchtgeschwindigkeit erreicht.",
+            "Dieses Gefühl hat seine eigene Anziehungskraft.",
+          ],
+        ],
+        [
+          999,
+          [
+            "Das Universum möchte etwas von dieser Liebe zurück.",
+            "Diese Zahl ist praktisch eine handgeschriebene Unendlichkeit.",
+            "So große Liebe braucht eine eigene Postleitzahl.",
+          ],
+        ],
+        [
+          1000,
+          [
+            "Tausend Prozent. Das Herz hat alles gesagt.",
+            "Höchste Zahl, unermessliches Gefühl.",
+            "Die Skala endet hier. Die Liebe ganz klar nicht.",
+          ],
+        ],
       ],
     },
     "pt-BR": {
       "meta.title.main": "Love Tracker — Quanto você é amada?",
       "meta.title.respond": "Uma pergunta de amor para você",
-      "meta.description": "Envie um pequeno recado de amor e descubra o quanto você é amada.",
-      "brand": "Love <em>Tracker</em>",
-      "ask.intro": "<span class=\"intro-question\">Quanto você é amada?</span> Diga seu nome e eu enviarei a pergunta direto para o coração dele.",
+      "meta.description":
+        "Envie um pequeno recado de amor e descubra o quanto você é amada.",
+      brand: "Love <em>Tracker</em>",
+      "ask.intro":
+        '<span class="intro-question">Quanto você é amada?</span> Diga seu nome e eu enviarei a pergunta direto para o coração dele.',
       "ask.name": "Seu nome",
       "ask.placeholder": "ex.: {loveName}",
       "ask.journey.title": "Mostrar nossa jornada de amor",
-      "ask.journey.copy": "Compartilhar minha localização aproximada para uma jornada de amor animada",
+      "ask.journey.copy":
+        "Compartilhar minha localização aproximada para uma jornada de amor animada",
       "ask.button": "Perguntar",
       "ask.sending": "Enviando…",
       "ask.finding": "Encontrando seu lugar…",
       "ask.error": "Algo deu errado. Tente novamente.",
       "request.expiredEyebrow": "Este recado de amor desapareceu",
       "request.expiredTitle": "Pedido expirado.",
-      "request.expiredCopy": "Este pedido não está mais disponível. Comece um novo pela página inicial.",
+      "request.expiredCopy":
+        "Este pedido não está mais disponível. Comece um novo pela página inicial.",
       "request.new": "Começar um novo pedido",
       "request.restoring": "Abrindo seu recado de amor…",
       "waiting.eyebrow": "Seu recado está a caminho",
       "waiting.title": "Esperando<br><em>uma resposta…</em>",
-      "waiting.copy": "{name}, mantenha esta página aberta. A resposta florescerá bem aqui.",
+      "waiting.copy":
+        "{name}, mantenha esta página aberta. A resposta florescerá bem aqui.",
       "waiting.label": "Esperando",
       "push.enable": "Avise-me quando a resposta chegar",
       "push.enabling": "Ativando as notificações…",
-      "push.enabled": "Você receberá uma notificação quando sua resposta estiver pronta ♥",
+      "push.enabled":
+        "Você receberá uma notificação quando sua resposta estiver pronta ♥",
       "push.ready": "As notificações estão disponíveis neste dispositivo.",
-      "push.denied": "As notificações não foram permitidas. Você pode manter esta página aberta.",
+      "push.denied":
+        "As notificações não foram permitidas. Você pode manter esta página aberta.",
       "push.error": "Não foi possível ativar as notificações.",
       waitingPhrases: [
         "Uma pequena pergunta está chegando a um grande coração.",
@@ -259,7 +447,8 @@
       "result.photoRetry": "Tentar carregar a foto novamente",
       "result.journey": "Sua jornada de amor",
       "result.journeyTitle": "O amor viajando entre dois corações",
-      "result.journeyDynamic": "O amor viaja para {direction}, do coração dele até {name}",
+      "result.journeyDynamic":
+        "O amor viaja para {direction}, do coração dele até {name}",
       "result.mapCaption": "Do coração dele para o seu.",
       "result.origin": "Coração dele",
       "result.again": "Perguntar novamente",
@@ -269,7 +458,8 @@
       "direction.south-west": "sudoeste",
       "respond.eyebrow": "Um recado privado, só para você",
       "respond.title": "O quanto você ama<br><em>{name}</em>?",
-      "respond.intro": "Escolha qualquer número, de suaves 0% até absolutamente impossíveis 1000%.",
+      "respond.intro":
+        "Escolha qualquer número, de suaves 0% até absolutamente impossíveis 1000%.",
       "respond.locationMap": "Localização aproximada de quem perguntou",
       "respond.mapKicker": "Uma pergunta do coração",
       "respond.answer": "Sua resposta",
@@ -287,45 +477,131 @@
       "respond.photoSize": "Escolha uma foto menor que 12 MB.",
       "respond.photoPrepareError": "Não foi possível preparar essa foto.",
       "respond.photoOpenError": "Não foi possível abrir essa foto.",
-      "respond.locationUnavailable": "A localização por IP não estava disponível para esta pergunta. Se o link foi criado antes da verificação de localização, peça um novo link.",
+      "respond.locationUnavailable":
+        "A localização por IP não estava disponível para esta pergunta. Se o link foi criado antes da verificação de localização, peça um novo link.",
       "respond.expiredEyebrow": "Este recado desapareceu",
       "respond.expiredTitle": "Link expirado.",
       "respond.approxLocation": "Localização aproximada de {name}",
       "respond.ipEstimate": "Estimativa por IP",
       "respond.sharedLocation": "Localização compartilhada de {name}",
-      "respond.ipCaptionShared": "Estimativa por IP: {place}. O segundo coração é a localização que a pessoa decidiu compartilhar.",
-      "respond.ipCaptionPrivate": "Estimativa por IP: {place}. O endereço IP não é exibido nem armazenado.",
-      "respond.sharedCaption": "Localização aproximada compartilhada por {name}.",
+      "respond.ipCaptionShared":
+        "Estimativa por IP: {place}. O segundo coração é a localização que a pessoa decidiu compartilhar.",
+      "respond.ipCaptionPrivate":
+        "Estimativa por IP: {place}. O endereço IP não é exibido nem armazenado.",
+      "respond.sharedCaption":
+        "Localização aproximada compartilhada por {name}.",
       "sent.eyebrow": "Entregue com amor",
       "sent.title": "Sua resposta está<br><em>a caminho.</em>",
       "sent.copy": "{name} já pode vê-la. Você pode fechar esta página.",
-      "sent.copyPhoto": "{name} já pode ver sua resposta e sua foto. Você pode fechar esta página.",
-      "footer": "feito com <span>♥</span> para {loveName}",
+      "sent.copyPhoto":
+        "{name} já pode ver sua resposta e sua foto. Você pode fechar esta página.",
+      footer: "feito com <span>♥</span> para {loveName}",
       resultMessages: [
-        [0, ["Uma resposta honesta também é uma forma de carinho.", "Alguns sentimentos precisam de tempo para encontrar seu número.", "Zero é apenas o começo deste pequeno medidor."]],
-        [24, ["Uma pequena faísca ainda é uma faísca.", "Às vezes o amor sussurra antes de aprender a cantar.", "O coração abriu uma frestinha da porta."]],
-        [49, ["Algo doce está definitivamente florescendo aqui.", "O coração está se aquecendo lindamente.", "As borboletas estão começando a se organizar."]],
-        [74, ["Esse é o tipo de número que vem com borboletas.", "O coração está oficialmente dando cambalhotas de alegria.", "Esse número merece um abraço demorado."]],
-        [99, ["Quase transbordando — o coração mal consegue conter.", "O medidor de amor ficou corado.", "O amor preencheu quase todos os cantinhos."]],
-        [100, ["Um coração inteiro, entregue de forma linda e completa.", "Cada porcentagem pertence a você.", "Perfeitamente, maravilhosamente, completamente amada."]],
-        [199, ["O medidor terminou em 100, mas o coração claramente não.", "Alguns sentimentos se recusam a respeitar limites razoáveis.", "Esta resposta vem com borboletas extras."]],
-        [399, ["É amor suficiente para vários universos paralelos.", "Aviso: carinho excessivo detectado.", "A calculadora ficou vermelha e desistiu."]],
-        [699, ["Isso não é uma porcentagem. É uma galáxia inteira.", "O coração atingiu a velocidade de escape.", "Esse sentimento tem sua própria gravidade."]],
-        [999, ["O universo ligou. Quer um pouco desse amor de volta.", "Esse número é praticamente um infinito escrito à mão.", "Um amor desse tamanho precisa de CEP próprio."]],
-        [1000, ["Mil por cento. O coração disse tudo.", "Número máximo, sentimento imensurável.", "A escala termina aqui. O amor claramente não."]],
+        [
+          0,
+          [
+            "Uma resposta honesta também é uma forma de carinho.",
+            "Alguns sentimentos precisam de tempo para encontrar seu número.",
+            "Zero é apenas o começo deste pequeno medidor.",
+          ],
+        ],
+        [
+          24,
+          [
+            "Uma pequena faísca ainda é uma faísca.",
+            "Às vezes o amor sussurra antes de aprender a cantar.",
+            "O coração abriu uma frestinha da porta.",
+          ],
+        ],
+        [
+          49,
+          [
+            "Algo doce está definitivamente florescendo aqui.",
+            "O coração está se aquecendo lindamente.",
+            "As borboletas estão começando a se organizar.",
+          ],
+        ],
+        [
+          74,
+          [
+            "Esse é o tipo de número que vem com borboletas.",
+            "O coração está oficialmente dando cambalhotas de alegria.",
+            "Esse número merece um abraço demorado.",
+          ],
+        ],
+        [
+          99,
+          [
+            "Quase transbordando — o coração mal consegue conter.",
+            "O medidor de amor ficou corado.",
+            "O amor preencheu quase todos os cantinhos.",
+          ],
+        ],
+        [
+          100,
+          [
+            "Um coração inteiro, entregue de forma linda e completa.",
+            "Cada porcentagem pertence a você.",
+            "Perfeitamente, maravilhosamente, completamente amada.",
+          ],
+        ],
+        [
+          199,
+          [
+            "O medidor terminou em 100, mas o coração claramente não.",
+            "Alguns sentimentos se recusam a respeitar limites razoáveis.",
+            "Esta resposta vem com borboletas extras.",
+          ],
+        ],
+        [
+          399,
+          [
+            "É amor suficiente para vários universos paralelos.",
+            "Aviso: carinho excessivo detectado.",
+            "A calculadora ficou vermelha e desistiu.",
+          ],
+        ],
+        [
+          699,
+          [
+            "Isso não é uma porcentagem. É uma galáxia inteira.",
+            "O coração atingiu a velocidade de escape.",
+            "Esse sentimento tem sua própria gravidade.",
+          ],
+        ],
+        [
+          999,
+          [
+            "O universo ligou. Quer um pouco desse amor de volta.",
+            "Esse número é praticamente um infinito escrito à mão.",
+            "Um amor desse tamanho precisa de CEP próprio.",
+          ],
+        ],
+        [
+          1000,
+          [
+            "Mil por cento. O coração disse tudo.",
+            "Número máximo, sentimento imensurável.",
+            "A escala termina aqui. O amor claramente não.",
+          ],
+        ],
       ],
     },
   };
 
   const supported = Object.keys(catalogs);
-  const locale = (navigator.languages || [navigator.language || "en"])
-    .map((candidate) => {
-      const normalized = candidate.replace("_", "-");
-      if (supported.includes(normalized)) return normalized;
-      if (normalized.toLowerCase().startsWith("pt")) return "pt-BR";
-      return supported.find((item) => item.toLowerCase() === normalized.split("-")[0].toLowerCase());
-    })
-    .find(Boolean) || "en";
+  const locale =
+    (navigator.languages || [navigator.language || "en"])
+      .map((candidate) => {
+        const normalized = candidate.replace("_", "-");
+        if (supported.includes(normalized)) return normalized;
+        if (normalized.toLowerCase().startsWith("pt")) return "pt-BR";
+        return supported.find(
+          (item) =>
+            item.toLowerCase() === normalized.split("-")[0].toLowerCase(),
+        );
+      })
+      .find(Boolean) || "en";
   const catalog = catalogs[locale];
 
   function t(key, variables = {}) {
@@ -346,14 +622,22 @@
       element.placeholder = t(element.dataset.i18nPlaceholder, variables);
     });
     document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
-      element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel, variables));
+      element.setAttribute(
+        "aria-label",
+        t(element.dataset.i18nAriaLabel, variables),
+      );
     });
     document.querySelectorAll("[data-i18n-alt]").forEach((element) => {
       element.setAttribute("alt", t(element.dataset.i18nAlt, variables));
     });
-    const titleKey = document.body.dataset.page === "respond" ? "meta.title.respond" : "meta.title.main";
+    const titleKey =
+      document.body.dataset.page === "respond"
+        ? "meta.title.respond"
+        : "meta.title.main";
     document.title = t(titleKey, variables);
-    document.querySelector('meta[name="description"]')?.setAttribute("content", t("meta.description", variables));
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute("content", t("meta.description", variables));
   }
 
   window.LoveI18n = {
