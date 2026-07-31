@@ -28,13 +28,15 @@ meter, and an optional map connecting both hearts.
 
 ## Run locally
 
-Requires Node.js 20 or newer.
+Requires Node.js 24.18.1 LTS or a newer Node.js 24 release.
 
 ```sh
 cp .env.example .env
 set -a
 source .env
 set +a
+npm ci
+npm run build
 npm start
 ```
 
@@ -45,7 +47,7 @@ the terminal. Open <http://localhost:3000>.
 
 | Variable                        | Required   | Description                                                                                                |
 | ------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| `LOVE_NAME`                     | No         | Name shown in the example input and “made with love” footer. Defaults to `Nayane`.                         |
+| `LOVE_NAME`                     | No         | Name shown in the example input and “made with love” footer. Defaults to `Aurora`.                         |
 | `IP_GEOLOCATION_ENABLED`        | No         | Set to `false` to disable automatic coarse IP geolocation. Enabled by default.                             |
 | `IP_GEOLOCATION_URL`            | No         | IP lookup URL containing an `{ip}` placeholder. Defaults to `https://ipwho.is/{ip}`.                       |
 | `PUBLIC_URL`                    | Production | Public base URL used in Pushover response links.                                                           |
@@ -62,11 +64,16 @@ the terminal. Open <http://localhost:3000>.
 Set `LOVE_NAME` to personalize the installation:
 
 ```env
-LOVE_NAME=Nayane
+LOVE_NAME=Aurora
 ```
 
 The value is server-rendered and safely HTML-escaped; changing it requires a
 restart or redeployment.
+
+`npm run build` copies Leaflet JavaScript, CSS, images, and the required DM Sans
+and Italiana font files from lockfile-pinned npm packages into `public/vendor`.
+The deployed pages do not load executable code or fonts from a CDN. Map tiles
+remain an external data service provided by OpenStreetMap.
 
 ## Docker Compose
 
@@ -80,6 +87,8 @@ docker compose up -d --build
 
 The example publishes the app on `${PORT:-3000}`, builds the local Dockerfile,
 and stores requests and photos in the persistent `love-tracker-data` volume.
+The production process runs as the unprivileged `node` user (UID/GID 1000).
+Existing bind mounts must be writable by that user before upgrading.
 
 ## Coolify deployment
 

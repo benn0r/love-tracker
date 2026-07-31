@@ -95,6 +95,10 @@ test("HTML is personalized, escaped, versioned, and never cached", async () => {
     assert.match(html, />\s*vtest-bu<\/span/);
     assert.match(html, /\/i18n\.js\?v=test-bu/);
     assert.match(html, /\/styles\.css\?v=test-bu/);
+    assert.match(html, /\/vendor\/fonts\/fonts\.css\?v=test-bu/);
+    assert.match(html, /\/vendor\/leaflet\/leaflet\.css\?v=test-bu/);
+    assert.match(html, /\/vendor\/leaflet\/leaflet\.js\?v=test-bu/);
+    assert.doesNotMatch(html, /unpkg\.com|fonts\.googleapis\.com/);
     assert.doesNotMatch(html, /__(APP_VERSION|LOVE_NAME)__/);
   }
 
@@ -133,6 +137,24 @@ test("scripts, manifests, and the service worker are served fresh", async () => 
     await (await fetch(`${baseUrl}/sw.js`)).text(),
     /notificationclick/,
   );
+});
+
+test("serves bundled Leaflet and font assets locally", async () => {
+  const assets = [
+    ["/vendor/leaflet/leaflet.js", "text/javascript; charset=utf-8"],
+    ["/vendor/leaflet/leaflet.css", "text/css; charset=utf-8"],
+    ["/vendor/leaflet/images/marker-icon.png", "image/png"],
+    ["/vendor/fonts/fonts.css", "text/css; charset=utf-8"],
+    ["/vendor/fonts/dm-sans-latin-400-normal.woff2", "font/woff2"],
+    ["/vendor/fonts/italiana-latin-400-normal.woff2", "font/woff2"],
+  ];
+
+  for (const [path, contentType] of assets) {
+    const response = await fetch(`${baseUrl}${path}`);
+    assert.equal(response.status, 200, path);
+    assert.equal(response.headers.get("content-type"), contentType, path);
+    assert.ok((await response.arrayBuffer()).byteLength > 0, path);
+  }
 });
 
 test("creates a private waiting request and sends the expected notification", async () => {

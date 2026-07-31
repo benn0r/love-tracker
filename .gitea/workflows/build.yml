@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest-slim
-    container: node:22.13.0-bookworm
+    container: node:24.18.1-bookworm
     timeout-minutes: 10
 
     steps:
@@ -57,7 +57,7 @@ jobs:
   test:
     needs: build
     runs-on: ubuntu-latest-slim
-    container: node:22.13.0-bookworm
+    container: node:24.18.1-bookworm
     timeout-minutes: 15
 
     steps:
@@ -203,6 +203,13 @@ jobs:
             | sed 's#[^a-z0-9_.-]#-#g')"
 
           docker build --provenance=false --tag "${image}:${branch_tag}" source
+          docker run --rm --entrypoint /bin/sh "${image}:${branch_tag}" -c '
+            test "$(id -u)" = "1000"
+            test "$(node --version)" = "v24.18.1"
+            test -s /app/public/vendor/leaflet/leaflet.js
+            test -s /app/public/vendor/leaflet/leaflet.css
+            test -s /app/public/vendor/fonts/fonts.css
+          '
           docker push "${image}:${branch_tag}"
 
       - name: Remove obsolete package versions

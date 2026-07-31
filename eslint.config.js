@@ -7,12 +7,18 @@ export default [
       "data/**",
       "node_modules/**",
       "playwright-report/**",
+      "public/vendor/**",
       "test-results/**",
     ],
   },
   eslint.configs.recommended,
   {
-    files: ["server.js", "playwright.config.js", "test/**/*.js"],
+    files: [
+      "server.js",
+      "playwright.config.js",
+      "scripts/**/*.js",
+      "test/**/*.js",
+    ],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

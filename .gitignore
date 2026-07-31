@@ -3,4 +3,5 @@ data/
 playwright-report/
 test-results/
 node_modules/
+public/vendor/
 .DS_Store

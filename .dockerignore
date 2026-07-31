@@ -4,4 +4,5 @@ data
 node_modules
 npm-debug.log
 playwright-report
+public/vendor
 test-results

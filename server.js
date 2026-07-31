@@ -16,9 +16,9 @@ const APP_VERSION = String(
   process.env.APP_VERSION || process.env.SOURCE_COMMIT || "local",
 ).slice(0, 7);
 const LOVE_NAME =
-  String(process.env.LOVE_NAME || "Nayane")
+  String(process.env.LOVE_NAME || "Aurora")
     .trim()
-    .slice(0, 60) || "Nayane";
+    .slice(0, 60) || "Aurora";
 const IP_GEOLOCATION_ENABLED = process.env.IP_GEOLOCATION_ENABLED !== "false";
 const IP_GEOLOCATION_URL =
   process.env.IP_GEOLOCATION_URL || "https://ipwho.is/{ip}";
@@ -43,6 +43,7 @@ const contentTypes = {
   ".png": "image/png",
   ".svg": "image/svg+xml; charset=utf-8",
   ".webmanifest": "application/manifest+json; charset=utf-8",
+  ".woff2": "font/woff2",
 };
 
 let requests = new Map();

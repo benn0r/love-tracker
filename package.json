@@ -5,23 +5,28 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "predev": "npm run bundle:assets",
     "dev": "node --watch server.js",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,json,css,html,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,json,css,html,md,yml,yaml}\"",
-    "build": "node --check server.js && node --check public/app.js && node --check public/respond.js && node --check public/i18n.js && node --check public/sw.js",
+    "bundle:assets": "node scripts/bundle-assets.js",
+    "build": "npm run bundle:assets && node --check server.js && node --check scripts/bundle-assets.js && node --check public/app.js && node --check public/respond.js && node --check public/i18n.js && node --check public/sw.js",
     "test": "npm run test:unit && npm run test:e2e",
     "test:unit": "node --test test/server.test.js",
     "test:e2e": "playwright test"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24.18.1 <25"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@fontsource/dm-sans": "5.3.0",
+    "@fontsource/italiana": "5.3.0",
     "@playwright/test": "1.62.0",
     "eslint": "10.8.0",
     "globals": "16.5.0",
+    "leaflet": "1.9.4",
     "prettier": "3.9.6"
   },
   "dependencies": {
