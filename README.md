@@ -23,6 +23,7 @@ meter, and an optional map connecting both hearts.
 - Optional camera/photo response
 - Installable iOS home-screen experience
 - Optional iOS Home Screen notification when an answer is ready
+- One-time Pushover notification when the asker sees the answered love message
 - Deployment version embedded in the HTML and asset URLs
 - Persistent request and photo storage with automatic seven-day expiry
 
@@ -52,7 +53,7 @@ the terminal. Open <http://localhost:3000>.
 | `IP_GEOLOCATION_URL`            | No         | IP lookup URL containing an `{ip}` placeholder. Defaults to `https://ipwho.is/{ip}`.                       |
 | `PUBLIC_URL`                    | Production | Public base URL used in Pushover response links.                                                           |
 | `PUSHOVER_APP_TOKEN`            | Production | Application token from Pushover.                                                                           |
-| `PUSHOVER_USER_KEY`             | Production | Pushover user or group key receiving response links.                                                       |
+| `PUSHOVER_USER_KEY`             | Production | Pushover user or group key receiving response links and seen receipts.                                     |
 | `PUSHOVER_API_URL`              | No         | Pushover-compatible API endpoint. Defaults to the official Pushover messages API; override it for testing. |
 | `VAPID_PUBLIC_KEY`              | Production | Public VAPID key used by browsers to create Web Push subscriptions.                                        |
 | `VAPID_PRIVATE_KEY`             | Production | Secret VAPID key used by the server to sign Web Push delivery requests.                                    |
@@ -162,7 +163,7 @@ IP-based locations can be wrong, especially with VPNs, mobile networks, and shar
 connections, and must not be treated as proof of identity.
 
 Response links contain a random 192-bit token and act as private bearer links.
-Requests, coarse location results, and optional photos are stored under `DATA_DIR`
+Requests, coarse location results, seen timestamps, and optional photos are stored under `DATA_DIR`
 and automatically expire after seven days. An optional push subscription is kept
 only while its request is waiting and is removed when answered. Keep a single application replica
 unless the file store is replaced with shared storage or a database.

@@ -220,6 +220,57 @@ test("answers once, preserves the winner, and rejects sequential duplicates", as
   });
 });
 
+test("sends one Pushover receipt after an answered message is seen", async () => {
+  const created = await createRequest({ name: "Bluebell" });
+  const notificationCount = notifications.length;
+
+  const premature = await fetch(
+    `${baseUrl}/api/requests/${created.body.id}/seen`,
+    { method: "POST" },
+  );
+  assert.equal(premature.status, 409);
+  assert.equal(notifications.length, notificationCount);
+
+  assert.equal(
+    (await answer(created.token, { value: 999 })).response.status,
+    200,
+  );
+  const [first, simultaneous] = await Promise.all([
+    fetch(`${baseUrl}/api/requests/${created.body.id}/seen`, {
+      method: "POST",
+    }),
+    fetch(`${baseUrl}/api/requests/${created.body.id}/seen`, {
+      method: "POST",
+    }),
+  ]);
+  assert.equal(first.status, 200);
+  assert.equal(simultaneous.status, 200);
+  assert.deepEqual(await first.json(), { seen: true });
+  assert.deepEqual(await simultaneous.json(), { seen: true });
+  assert.equal(notifications.length, notificationCount + 1);
+
+  const receipt = notifications.at(-1);
+  assert.equal(receipt.token, "mock-app-token");
+  assert.equal(receipt.user, "mock-user-key");
+  assert.equal(receipt.title, "Love message seen 👀");
+  assert.equal(receipt.message, "Bluebell has seen your love message. ♥");
+  assert.equal(receipt.priority, "0");
+  assert.equal(receipt.sound, "magic");
+  assert.equal(receipt.url, undefined);
+
+  const duplicate = await fetch(
+    `${baseUrl}/api/requests/${created.body.id}/seen`,
+    { method: "POST" },
+  );
+  assert.equal(duplicate.status, 200);
+  assert.equal(notifications.length, notificationCount + 1);
+
+  const stored = JSON.parse(
+    await readFile(join(dataDir, "requests.json"), "utf8"),
+  ).find((request) => request.id === created.body.id);
+  assert.match(stored.seenAt, /^\d{4}-\d{2}-\d{2}T/);
+});
+
 test("allows only one winner when two answers arrive concurrently", async () => {
   const created = await createRequest({ name: "Celeste" });
   const submissions = await Promise.all([
@@ -359,6 +410,14 @@ test("handles unknown capabilities, disabled subscriptions, and bad paths safely
   assert.equal((await fetch(`${baseUrl}/api/respond/not-a-token`)).status, 404);
   assert.equal(
     (await fetch(`${baseUrl}/api/requests/not-a-uuid/photo`)).status,
+    404,
+  );
+  assert.equal(
+    (
+      await fetch(`${baseUrl}/api/requests/not-a-uuid/seen`, {
+        method: "POST",
+      })
+    ).status,
     404,
   );
 

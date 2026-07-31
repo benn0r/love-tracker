@@ -18,6 +18,9 @@ let phraseTimer;
 let phraseTransitionTimer;
 let phraseIndex = -1;
 let currentRequestId = requestPathMatch?.[1] || null;
+const seenReceipts = new Set();
+const seenReceiptRequests = new Set();
+const seenReceiptAttempts = new Map();
 
 if (requestPathMatch) {
   askView.classList.add("hidden");
@@ -237,6 +240,7 @@ function showResult(name, value, journey, photoUrl) {
   const progressBar = document.querySelector(".progress-track");
   const normalizedValue = Math.min(value, 100);
   document.body.classList.add("celebrate");
+  sendSeenReceipt(currentRequestId);
 
   function animate(now) {
     const progress = Math.min((now - started) / duration, 1);
@@ -251,6 +255,36 @@ function showResult(name, value, journey, photoUrl) {
     if (progress < 1) requestAnimationFrame(animate);
   }
   requestAnimationFrame(animate);
+}
+
+function sendSeenReceipt(id) {
+  if (!id || seenReceipts.has(id) || seenReceiptRequests.has(id)) return;
+
+  const sendWhenVisible = async () => {
+    if (document.visibilityState !== "visible") return;
+    document.removeEventListener("visibilitychange", sendWhenVisible);
+    seenReceiptRequests.add(id);
+    try {
+      const response = await fetch(`/api/requests/${id}/seen`, {
+        method: "POST",
+        keepalive: true,
+      });
+      if (!response.ok)
+        throw new Error(`Seen receipt returned ${response.status}`);
+      seenReceipts.add(id);
+      seenReceiptAttempts.delete(id);
+    } catch (error) {
+      console.error("Could not send seen receipt:", error);
+      const attempts = (seenReceiptAttempts.get(id) || 0) + 1;
+      seenReceiptAttempts.set(id, attempts);
+      if (attempts < 3) setTimeout(() => sendSeenReceipt(id), attempts * 1500);
+    } finally {
+      seenReceiptRequests.delete(id);
+    }
+  };
+
+  if (document.visibilityState === "visible") sendWhenVisible();
+  else document.addEventListener("visibilitychange", sendWhenVisible);
 }
 
 async function showLovePhoto(photoUrl) {

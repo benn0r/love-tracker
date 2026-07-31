@@ -197,6 +197,7 @@ test("complete browser journey with shared locations", async ({
       .toBe(true);
     await attachScreenshot(answerPage, testInfo, "with-location-answer");
     const pushIndex = pushDeliveries.length;
+    const seenNotificationIndex = notifications.length;
     await answerPage.locator('#response-form button[type="submit"]').click();
     await expect(answerPage.locator("#sent-view")).toBeVisible();
     const delivery = await recordAt(
@@ -214,6 +215,14 @@ test("complete browser journey with shared locations", async ({
     });
     await expect(page.locator("#love-map")).toBeVisible();
     await expect(page.locator("#love-photo")).toBeVisible();
+    assertSeenNotification(
+      await recordAt(
+        notifications,
+        seenNotificationIndex,
+        "Pushover seen notification",
+      ),
+      "Ada",
+    );
     await expect
       .poll(() =>
         page
@@ -297,6 +306,7 @@ test("complete browser journey without locations", async ({
     await expect(answerPage.locator("#request-location-map")).toBeHidden();
     await answerPage.locator("#value").fill("100");
     await attachScreenshot(answerPage, testInfo, "without-location-answer");
+    const seenNotificationIndex = notifications.length;
     await answerPage.locator('#response-form button[type="submit"]').click();
     await expect(answerPage.locator("#sent-view")).toBeVisible();
 
@@ -305,6 +315,14 @@ test("complete browser journey without locations", async ({
       timeout: 6_000,
     });
     await expect(page.locator("#love-map")).toBeHidden();
+    assertSeenNotification(
+      await recordAt(
+        notifications,
+        seenNotificationIndex,
+        "Pushover seen notification",
+      ),
+      "Grace",
+    );
     await attachScreenshot(page, testInfo, "without-location-result");
 
     const requestId = new URL(page.url()).pathname.split("/").pop();
@@ -364,6 +382,16 @@ function assertNotification(notification, name) {
   const answerUrl = new URL(notification.url);
   expect(answerUrl.origin).toBe(baseUrl);
   expect(answerUrl.pathname).toMatch(/^\/respond\/[A-Za-z0-9_-]+$/);
+}
+
+function assertSeenNotification(notification, name) {
+  expect(notification.token).toBe("mock-app-token");
+  expect(notification.user).toBe("mock-user-key");
+  expect(notification.title).toBe("Love message seen 👀");
+  expect(notification.message).toBe(`${name} has seen your love message. ♥`);
+  expect(notification.priority).toBe("0");
+  expect(notification.sound).toBe("magic");
+  expect(notification.url).toBeUndefined();
 }
 
 async function recordAt(records, index, description) {

@@ -49,6 +49,7 @@ const contentTypes = {
 let requests = new Map();
 let saveQueue = Promise.resolve();
 const answeringRequests = new Set();
+const seenNotificationRequests = new Map();
 
 if (WEB_PUSH_ENABLED) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
@@ -404,7 +405,7 @@ async function getIpLocation(req) {
   }
 }
 
-async function sendPushover(name, responseUrl) {
+async function sendPushover(message) {
   const token = process.env.PUSHOVER_APP_TOKEN;
   const user = process.env.PUSHOVER_USER_KEY;
   const apiUrl =
@@ -413,20 +414,20 @@ async function sendPushover(name, responseUrl) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("Pushover credentials are not configured");
     }
-    console.log(`Love request from ${name}: ${responseUrl}`);
+    console.log(message.developmentLog);
     return;
   }
 
   const body = new URLSearchParams({
     token,
     user,
-    title: "Someone is wondering… 💌",
-    message: `${name} wants to know how much you love her.`,
-    url: responseUrl,
-    url_title: `Answer ${name}`,
-    priority: "1",
-    sound: "magic",
+    title: message.title,
+    message: message.body,
+    priority: message.priority || "0",
+    sound: message.sound || "magic",
   });
+  if (message.url) body.set("url", message.url);
+  if (message.urlTitle) body.set("url_title", message.urlTitle);
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -434,6 +435,25 @@ async function sendPushover(name, responseUrl) {
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error(`Pushover returned ${response.status}`);
+}
+
+function sendRequestPushover(name, responseUrl) {
+  return sendPushover({
+    title: "Someone is wondering… 💌",
+    body: `${name} wants to know how much you love her.`,
+    url: responseUrl,
+    urlTitle: `Answer ${name}`,
+    priority: "1",
+    developmentLog: `Love request from ${name}: ${responseUrl}`,
+  });
+}
+
+function sendSeenPushover(request) {
+  return sendPushover({
+    title: "Love message seen 👀",
+    body: `${request.name} has seen your love message. ♥`,
+    developmentLog: `${request.name} has seen the love message.`,
+  });
 }
 
 async function createRequest(req, res) {
@@ -466,13 +486,14 @@ async function createRequest(req, res) {
     value: null,
     createdAt: new Date().toISOString(),
     answeredAt: null,
+    seenAt: null,
     pushSubscription: null,
     pushLanguage: null,
   };
   const responseUrl = `${getBaseUrl(req)}/respond/${request.token}`;
 
   try {
-    await sendPushover(name, responseUrl);
+    await sendRequestPushover(name, responseUrl);
     requests.set(request.id, request);
     await pruneExpired();
     await saveRequests();
@@ -537,6 +558,35 @@ function getRequest(res, id) {
         ? `/api/requests/${request.id}/photo`
         : null,
   });
+}
+
+async function markRequestSeen(res, id) {
+  const request = requests.get(id);
+  if (!request)
+    return sendJson(res, 404, { error: "This love note has expired." });
+  if (request.value === null)
+    return sendJson(res, 409, { error: "This love note is not answered yet." });
+  if (request.seenAt) return sendJson(res, 200, { seen: true });
+
+  let notification = seenNotificationRequests.get(id);
+  if (!notification) {
+    notification = (async () => {
+      await sendSeenPushover(request);
+      request.seenAt = new Date().toISOString();
+      await saveRequests();
+    })().finally(() => seenNotificationRequests.delete(id));
+    seenNotificationRequests.set(id, notification);
+  }
+
+  try {
+    await notification;
+    sendJson(res, 200, { seen: true });
+  } catch (error) {
+    console.warn(
+      `Seen notification failed for request ${request.id}: ${error.message}`,
+    );
+    sendJson(res, 502, { error: "The seen notification could not be sent." });
+  }
 }
 
 async function getRequestPhoto(res, id) {
@@ -738,6 +788,10 @@ const server = http.createServer(async (req, res) => {
     const requestMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)$/);
     if (req.method === "GET" && requestMatch)
       return getRequest(res, requestMatch[1]);
+    const seenMatch = pathname.match(/^\/api\/requests\/([0-9a-f-]+)\/seen$/);
+    if (req.method === "POST" && seenMatch) {
+      return await markRequestSeen(res, seenMatch[1]);
+    }
     const subscriptionMatch = pathname.match(
       /^\/api\/requests\/([0-9a-f-]+)\/push-subscription$/,
     );
